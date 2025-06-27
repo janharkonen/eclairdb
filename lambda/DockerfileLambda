@@ -1,0 +1,7 @@
+FROM public.ecr.aws/lambda/go:1
+
+# Copy Go binary into container
+COPY main ${LAMBDA_TASK_ROOT}
+
+# Command to run
+CMD [ "main" ]
