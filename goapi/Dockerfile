@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.24.2-alpine AS builder
+FROM golang:tip-bullseye AS builder
 WORKDIR /app
 COPY go.mod .
 COPY . .

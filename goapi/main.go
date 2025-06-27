@@ -14,7 +14,7 @@ func main() {
 	router.Use(corsConfig)
 	router.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "pong\n") })
 	router.GET("/data", getData)
-	router.Run(":8080")
+	router.Run(":8081")
 }
 
 func corsConfig(c *gin.Context) {
