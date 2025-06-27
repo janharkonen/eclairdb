@@ -1,0 +1,13 @@
+services:
+  
+  goapi:
+    container_name: goapi_container
+    build:
+      context: ./goapi
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - app-network
+
+networks:
+  app-network:
