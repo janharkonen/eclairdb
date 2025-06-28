@@ -14,5 +14,5 @@ RUN adduser -D goapiuser
 USER goapiuser
 COPY --from=builder /app/main .
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -f http://localhost:8080/ping || exit 1
+  CMD curl -f http://localhost:8081/ping || exit 1
 CMD ["./main"]
