@@ -1,0 +1,26 @@
+services:
+
+  goapi:
+    container_name: goapicontainer
+    build:
+      context: ./goapi
+    ports:
+      - "127.0.0.1:8081:8081"
+    networks:
+      - app-network
+    profiles:
+      - prod
+    develop:
+      watch:
+        - action: sync
+          path: ./goapi
+          target: /app
+          ignore:
+            - .git/
+        - action: rebuild
+          path: ./goapi/main.go
+        - action: sync+restart
+          path: ./goapi/main.go
+
+networks:
+  app-network:
