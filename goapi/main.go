@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/janharkonen/eclairdb/postgresloader"
 )
 
 func main() {
@@ -12,8 +13,9 @@ func main() {
 	router := gin.Default()
 
 	router.Use(corsConfig)
-	router.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "pong\n") })
+	router.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "pong9\n") })
 	router.GET("/data", getData)
+	router.GET("/postgres", postgres)
 	router.Run(":8081")
 }
 
@@ -30,4 +32,9 @@ func corsConfig(c *gin.Context) {
 
 func getData(c *gin.Context) {
 	c.JSON(http.StatusOK, "data")
+}
+
+func postgres(c *gin.Context) {
+	postgresloader.LoadData()
+	c.JSON(http.StatusOK, "postgres2")
 }
