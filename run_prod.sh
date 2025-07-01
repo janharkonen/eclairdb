@@ -1,2 +1,2 @@
 docker compose build goapi
-docker compose up goapi --watch
+docker compose up goapi
