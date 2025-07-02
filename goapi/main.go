@@ -13,10 +13,10 @@ func main() {
 	router := gin.Default()
 
 	router.Use(corsConfig)
-	router.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "pong20\n") })
+	router.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "pong21\n") })
 	router.GET("/data", getData)
 	router.GET("/postgres", postgres)
-	router.Run("0.0.0.0:8081")
+	router.Run(":8081")
 }
 
 func corsConfig(c *gin.Context) {
