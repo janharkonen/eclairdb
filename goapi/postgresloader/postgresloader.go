@@ -55,6 +55,6 @@ func LoadData(postgresurl string, db *types.Database) error {
 	return nil
 }
 
-func addition(a int, b int) int {
+func Addition(a int, b int) int {
 	return a + b
 }
