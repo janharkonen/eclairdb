@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
-	"fmt"
+	"sync"
 
 	_ "github.com/lib/pq"
 
@@ -13,44 +13,67 @@ import (
 
 func LoadData(postgresurl string, db *types.Database) error {
 
+	hasher := sha256.New()
+	hasher.Write([]byte(postgresurl))
+	postgresurlsha := types.Sha(base64.URLEncoding.EncodeToString(hasher.Sum(nil)))
+
 	dbclient, err := sql.Open("postgres", postgresurl)
 	if err != nil {
 		return err
 	}
 	defer dbclient.Close()
-
-	hasher := sha256.New()
-	hasher.Write([]byte(postgresurl))
-	postgresurlsha := types.Sha(base64.URLEncoding.EncodeToString(hasher.Sum(nil)))
-	fmt.Println(postgresurlsha)
+	mu := sync.Mutex{}
+	mu.Lock()
 	(*db)[postgresurlsha] = make(map[types.Schema]map[types.Table]map[types.Key]types.Value)
+	mu.Unlock()
 
-	schemas, err := dbclient.Query("SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT LIKE 'pg_%' AND schema_name != 'information_schema'")
+	if err := dbclient.Ping(); err != nil {
+		return err
+	}
+	query := `
+		SELECT 
+			s.schema_name, 
+			t.table_name 
+		FROM 
+			information_schema.schemata s
+		LEFT JOIN 
+			information_schema.tables t 
+		ON 
+			s.schema_name = t.table_schema
+		WHERE 
+			s.schema_name NOT LIKE 'pg_%' 
+			AND s.schema_name != 'information_schema'
+		ORDER BY 
+			s.schema_name, t.table_name
+	`
+
+	schemaTablesRows, err := dbclient.Query(query)
 	if err != nil {
 		return err
 	}
-	defer schemas.Close()
+	defer schemaTablesRows.Close()
 
-	for schemas.Next() {
-		var schema_name string
-		err = schemas.Scan(&schema_name)
-		if err != nil {
+	// Process the results and build the data structure
+	for schemaTablesRows.Next() {
+		var schemaName, tableName sql.NullString
+		if err := schemaTablesRows.Scan(&schemaName, &tableName); err != nil {
 			return err
 		}
-		(*db)[postgresurlsha][types.Schema(schema_name)] = make(map[types.Table]map[types.Key]types.Value)
-		tables, err := dbclient.Query("SELECT table_name FROM information_schema.tables WHERE table_schema = '" + schema_name + "'")
-		if err != nil {
-			return err
-		}
-		defer tables.Close()
-		for tables.Next() {
-			var table_name string
-			err = tables.Scan(&table_name)
-			if err != nil {
-				return err
+
+		if schemaName.Valid {
+			if tableName.Valid {
+				mu.Lock()
+				if _, exists := (*db)[postgresurlsha][types.Schema(schemaName.String)]; !exists {
+					(*db)[postgresurlsha][types.Schema(schemaName.String)] = make(map[types.Table]map[types.Key]types.Value)
+				}
+				(*db)[postgresurlsha][types.Schema(schemaName.String)][types.Table(tableName.String)] = make(map[types.Key]types.Value)
+				mu.Unlock()
 			}
-			(*db)[postgresurlsha][types.Schema(schema_name)][types.Table(table_name)] = make(map[types.Key]types.Value)
 		}
+	}
+
+	if err := schemaTablesRows.Err(); err != nil {
+		return err
 	}
 	return nil
 }
