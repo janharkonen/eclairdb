@@ -48,7 +48,6 @@ func postgres(ginctx *gin.Context) {
 	}
 
 	postgresurl := requestBody.PostgresURL
-	fmt.Println("postgresurl: ", postgresurl)
 	err := postgresloader.LoadData(postgresurl, &db)
 	if err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
