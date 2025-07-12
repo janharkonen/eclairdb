@@ -56,6 +56,8 @@
   box-sizing: border-box;
   margin: 0;
   font-weight: normal;
+  min-width: 0;
+  min-height: 0;
 }
 
 body {
