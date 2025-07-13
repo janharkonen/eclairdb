@@ -4,6 +4,7 @@
 #app {
   margin: 0 auto;
   font-weight: normal;
+  background: linear-gradient(135deg, #2a809b, #35bbd3);
 }
 
 a,

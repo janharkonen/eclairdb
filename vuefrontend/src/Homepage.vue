@@ -1,32 +1,51 @@
 <template>
-  <div class="w-full h-full flex flex-col">
-    <div class="logo-div">
+  <div class="
+    w-full
+    opacity-90
+    max-w-5xl
+    mx-auto
+    shadow-lg 
+    flex 
+    flex-col 
+    bg-cyan-800 
+    rounded-xl 
+    px-4 
+    pb-10
+    font-mono 
+    text-gray-100 
+    text-xs 
+    md:text-base">
+    <div class="logo-div"> 
       <img 
-      src="https://picapi.janharkonen.fi/api/pics/ba7cbf1c9780435899c83df67d5a1747.png"
+      src="https://picapi.janharkonen.fi/api/pics/7b99c61a71c741c3a51896123e8069db.png"
       alt="EclairDB Logo"
-      class="logo-img" 
+      class="logo-img opacity-100"
+      style="filter: invert(1);"
       />
     </div>
     <div class="inputs-div">
-      <div class="input-div">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg"
-        alt="Postgres Logo" 
-        class="w-8 h-8 flex-shrink-0" 
-        />
-        <input 
-        type="text" 
-        placeholder="postgres://user_name:pass_word@host-IP:port/database-name?sslmode=disable" 
-        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        />
-      </div>
+      <DatabaseInput
+        img-src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg"
+        img-alt="Postgres Logo"
+        placeholder="postgres://user_name:pass_word@host-IP:port/database-name?sslmode=disable"
+      />
+      <DatabaseInput
+        img-src="https://picapi.janharkonen.fi/api/pics/c6bed4194e4341fc992e13a0487fb329.png"
+        img-alt="SQLite Logo"
+        placeholder="TO BE IMPLEMENTED"
+      />
     </div>
   </div>
 </template>
 
+<script setup lang="ts">
+import DatabaseInput from './components/DatabaseInput.vue'
+</script>
+
 <style scoped>
 .logo-div {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 2rem;
@@ -35,27 +54,15 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  max-width: 240px;
-  max-height: 240px;
+  max-width: 320px;
+  max-height: 320px;
 }
 .inputs-div {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding-top: 8rem;
-  gap: 2rem;
-  width: 100%;
-  height: 100%;
-  flex-grow: 1;
-}
-.input-div {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: 1rem;
   width: 100%;
-  max-width: 920px;
 }
 </style>

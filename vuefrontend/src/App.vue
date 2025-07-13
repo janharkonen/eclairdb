@@ -3,7 +3,7 @@ import Homepage from './Homepage.vue';
 </script>
 
 <template>
-  <main class="w-full h-full p-4">
+  <main class="w-full h-full flex flex-col items-center justify-center">
     <Homepage />
   </main>
   <footer className="flex-none w-full bg-gray-100 text-gray-800">
