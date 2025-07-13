@@ -4,10 +4,12 @@
     opacity-90
     max-w-5xl
     mx-auto
-    shadow-lg 
+    shadow-2xl
+    border-2
+    border-cyan-300
     flex 
     flex-col 
-    bg-cyan-800 
+    bg-gradient-to-tl from-cyan-800 to-cyan-700
     rounded-xl 
     px-4 
     pb-10
