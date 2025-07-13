@@ -26,12 +26,12 @@
     <div class="inputs-div">
       <DatabaseInput
         img-src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg"
-        img-alt="Postgres Logo"
+        service="PostgreSQL"
         placeholder="postgres://user_name:pass_word@host-IP:port/database-name?sslmode=disable"
       />
       <DatabaseInput
         img-src="https://picapi.janharkonen.fi/api/pics/c6bed4194e4341fc992e13a0487fb329.png"
-        img-alt="SQLite Logo"
+        service="SQLite"
         placeholder="TO BE IMPLEMENTED"
       />
     </div>
