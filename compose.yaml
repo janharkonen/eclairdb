@@ -1,4 +1,19 @@
 services:
+  vuefrontend-dev:
+    container_name: vuefrontendcontainer-dev
+    build:
+      context: ./vuefrontend
+      dockerfile: Dockerfile_dev
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      - goapi
+    volumes:
+      - ./vuefrontend:/app
+    networks:
+      - app-network
+    profiles:
+      - dev
   vuefrontend:
     container_name: vuefrontendcontainer
     build:
@@ -21,14 +36,7 @@ services:
       - prod
     develop:
       watch:
-        - action: sync
-          path: ./goapi
-          target: /app
-          ignore:
-            - .git/
         - action: rebuild
-          path: ./goapi/main.go
-        - action: sync+restart
           path: ./goapi/main.go
 
 networks:
