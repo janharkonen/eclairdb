@@ -44,7 +44,7 @@ v-bind: is the same as :
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onMounted } from 'vue'
 import { ArrowRight, Loader2 } from 'lucide-vue-next'
 import { useQuery } from '@tanstack/vue-query';
@@ -58,21 +58,21 @@ interface Props {
 
 const props = defineProps<Props>()
 
-var inputValue = ""
-const textisEmpty = ref(true)
+const inputValue = ref("")
 const isLoading = ref(false)
+const textisEmpty = computed(() => {
+  return (inputValue.value === "")
+})
 
 onMounted(() => {
   const inputElement = document.querySelector(`input[name="${props.service}"]`)
   if (inputElement) {
     // Set initial value
-    inputValue = (inputElement as HTMLInputElement).value
-    textisEmpty.value = (inputValue === "")
+    inputValue.value = (inputElement as HTMLInputElement).value
     
     // Add event listener to update the value when input changes
     inputElement.addEventListener('input', (e) => {
-      inputValue = (e.target as HTMLInputElement).value
-      textisEmpty.value = (inputValue === "")
+      inputValue.value = (e.target as HTMLInputElement).value
     })
   }
   
@@ -82,7 +82,7 @@ const handleButtonClick = () => {
   setTimeout(() => {
     isLoading.value = false
   }, 1000)
-  console.log('Input value:', inputValue);
+  console.log('Input value:', inputValue.value);
 }
 
 /*
