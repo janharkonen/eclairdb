@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile_dev
     ports:
       - "127.0.0.1:5173:5173"
-    depends_on:
-      - goapi
     volumes:
       - ./vuefrontend:/app
     networks:

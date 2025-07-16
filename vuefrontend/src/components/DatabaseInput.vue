@@ -1,3 +1,7 @@
+<!--
+v-on: is the same as @
+v-bind: is the same as :
+-->
 <template>
   <form class="
     input-div
@@ -23,8 +27,6 @@
           :alt="service + ' Logo'"
           class="h-8 w-8 px-1 py-1 md:h-10 md:w-10 aspect-square opacity-100" 
         />
-        <span class="text-red-500">{{ count }}</span>
-        <button type="button" @click="count++">Click me</button>
       </div>
       <button 
         class="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 bg-cyan-500 hover:bg-cyan-600 h-8 w-8 md:h-10 md:w-10 rounded flex items-center justify-center transition-colors duration-200 border border-blue-300/3 hover:cursor-pointer "
@@ -34,16 +36,17 @@
         @click="handleButtonClick"
         :title="`Connect to database using ${service}`"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
+        <ArrowRight v-if="!isLoading" />
+        <Loader2 v-else class="animate-spin" />
       </button>
     </div>
   </form>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { onMounted } from 'vue'
+import { ArrowRight, Loader2 } from 'lucide-vue-next'
 import { useQuery } from '@tanstack/vue-query';
 
 interface Props {
@@ -55,31 +58,31 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Reactive data using ref()
-const count = ref(1)
-const inputValue = ref('')
-const textisEmpty = ref(true)
-
-// Use onMounted to set up the input value watcher after the component is mounted
-import { onMounted } from 'vue'
+const inputValue = ref("")
+const isLoading = ref(false)
+const textisEmpty = computed(() => {
+  return (inputValue.value === "")
+})
 
 onMounted(() => {
   const inputElement = document.querySelector(`input[name="${props.service}"]`)
   if (inputElement) {
     // Set initial value
     inputValue.value = (inputElement as HTMLInputElement).value
-    textisEmpty.value = !inputValue.value
     
     // Add event listener to update the value when input changes
     inputElement.addEventListener('input', (e) => {
       inputValue.value = (e.target as HTMLInputElement).value
-      textisEmpty.value = !inputValue.value
     })
   }
   
 })
 const handleButtonClick = () => {
-  console.log('Input value:', inputValue);
+  isLoading.value = true
+  setTimeout(() => {
+    isLoading.value = false
+  }, 1000)
+  console.log('Input value:', inputValue.value);
 }
 
 /*
