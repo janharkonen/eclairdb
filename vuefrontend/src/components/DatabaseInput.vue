@@ -36,9 +36,8 @@ v-bind: is the same as :
         @click="handleButtonClick"
         :title="`Connect to database using ${service}`"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
+        <ArrowRight v-if="!isLoading" />
+        <Loader2 v-else class="animate-spin" />
       </button>
     </div>
   </form>
@@ -47,6 +46,7 @@ v-bind: is the same as :
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onMounted } from 'vue'
+import { ArrowRight, Loader2 } from 'lucide-vue-next'
 import { useQuery } from '@tanstack/vue-query';
 
 interface Props {
@@ -60,6 +60,7 @@ const props = defineProps<Props>()
 
 var inputValue = ""
 const textisEmpty = ref(true)
+const isLoading = ref(false)
 
 onMounted(() => {
   const inputElement = document.querySelector(`input[name="${props.service}"]`)
@@ -77,6 +78,10 @@ onMounted(() => {
   
 })
 const handleButtonClick = () => {
+  isLoading.value = true
+  setTimeout(() => {
+    isLoading.value = false
+  }, 1000)
   console.log('Input value:', inputValue);
 }
 
