@@ -1,3 +1,7 @@
+<!--
+v-on: is the same as @
+v-bind: is the same as :
+-->
 <template>
   <form class="
     input-div
@@ -23,8 +27,6 @@
           :alt="service + ' Logo'"
           class="h-8 w-8 px-1 py-1 md:h-10 md:w-10 aspect-square opacity-100" 
         />
-        <span class="text-red-500">{{ count }}</span>
-        <button type="button" @click="count++">Click me</button>
       </div>
       <button 
         class="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 bg-cyan-500 hover:bg-cyan-600 h-8 w-8 md:h-10 md:w-10 rounded flex items-center justify-center transition-colors duration-200 border border-blue-300/3 hover:cursor-pointer "
@@ -44,6 +46,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { onMounted } from 'vue'
 import { useQuery } from '@tanstack/vue-query';
 
 interface Props {
@@ -55,25 +58,20 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Reactive data using ref()
-const count = ref(1)
-const inputValue = ref('')
+var inputValue = ""
 const textisEmpty = ref(true)
-
-// Use onMounted to set up the input value watcher after the component is mounted
-import { onMounted } from 'vue'
 
 onMounted(() => {
   const inputElement = document.querySelector(`input[name="${props.service}"]`)
   if (inputElement) {
     // Set initial value
-    inputValue.value = (inputElement as HTMLInputElement).value
-    textisEmpty.value = !inputValue.value
+    inputValue = (inputElement as HTMLInputElement).value
+    textisEmpty.value = (inputValue === "")
     
     // Add event listener to update the value when input changes
     inputElement.addEventListener('input', (e) => {
-      inputValue.value = (e.target as HTMLInputElement).value
-      textisEmpty.value = !inputValue.value
+      inputValue = (e.target as HTMLInputElement).value
+      textisEmpty.value = (inputValue === "")
     })
   }
   
