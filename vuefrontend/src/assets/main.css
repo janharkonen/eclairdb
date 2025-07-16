@@ -1,0 +1,8 @@
+@import './base.css';
+@import 'tailwindcss';
+
+#app {
+  margin: 0 auto;
+  font-weight: normal;
+  background: linear-gradient(135deg, #133c53, #23719e);
+}

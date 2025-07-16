@@ -1,2 +1,2 @@
-docker compose build goapi
-docker compose up goapi
+docker compose build goapi vuefrontend
+docker compose up goapi vuefrontend

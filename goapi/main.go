@@ -19,7 +19,7 @@ func main() {
 	router.Use(corsConfig)
 	router.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "pong31\n") })
 	router.GET("/data", getData)
-	router.POST("/postgres", postgres)
+	router.POST("/connect-postgres", connectPostgres)
 	router.Run("0.0.0.0:8081")
 }
 
@@ -38,7 +38,7 @@ func getData(ginctx *gin.Context) {
 	ginctx.JSON(http.StatusOK, "data")
 }
 
-func postgres(ginctx *gin.Context) {
+func connectPostgres(ginctx *gin.Context) {
 	var requestBody struct {
 		PostgresURL string `json:"postgresurl"`
 	}
