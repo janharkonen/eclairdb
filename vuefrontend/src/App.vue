@@ -21,14 +21,3 @@ import Homepage from './Homepage.vue';
     </div>
   </footer>
 </template>
-
-<style scoped>
-/*
-header {
-  img {
-    max-width: 400px;
-    max-height: 400px;
-  }
-}
-*/
-</style>

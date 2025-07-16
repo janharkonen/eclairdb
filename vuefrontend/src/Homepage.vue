@@ -30,18 +30,25 @@
         img-src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg"
         service="PostgreSQL"
         placeholder="postgres://user_name:pass_word@host-IP:port/database-name?sslmode=disable"
+        apiroute="connect-postgres"
       />
-      <DatabaseInput
+      <!--
+        <DatabaseInput
         img-src="https://picapi.janharkonen.fi/api/pics/c6bed4194e4341fc992e13a0487fb329.png"
         service="SQLite"
         placeholder="TO BE IMPLEMENTED"
-      />
+        apiroute="connect-sqlite"
+        />
+      -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import DatabaseInput from './components/DatabaseInput.vue'
+
+
+
 </script>
 
 <style scoped>
