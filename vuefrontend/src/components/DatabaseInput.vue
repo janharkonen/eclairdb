@@ -16,6 +16,7 @@ v-bind: is the same as :
     <div class="relative flex w-full h-12 md:h-16">
       <input 
         type="text" 
+        v-model="inputText"
         :name="service"
         :placeholder="placeholder" 
         class="flex-1 text-black pl-12 md:pl-14 pr-4 py-2 border-2 placeholder:text-black/50 border-cyan-300/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 shadow-inner shadow-cyan-200/20"
@@ -45,7 +46,6 @@ v-bind: is the same as :
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { onMounted } from 'vue'
 import { ArrowRight, Loader2 } from 'lucide-vue-next'
 import { useQuery } from '@tanstack/vue-query';
 
@@ -58,31 +58,16 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const inputValue = ref("")
+const inputText = ref("")
 const isLoading = ref(false)
-const textisEmpty = computed(() => {
-  return (inputValue.value === "")
-})
-
-onMounted(() => {
-  const inputElement = document.querySelector(`input[name="${props.service}"]`)
-  if (inputElement) {
-    // Set initial value
-    inputValue.value = (inputElement as HTMLInputElement).value
-    
-    // Add event listener to update the value when input changes
-    inputElement.addEventListener('input', (e) => {
-      inputValue.value = (e.target as HTMLInputElement).value
-    })
-  }
+const textisEmpty = computed(() => (inputText.value === ""))
   
-})
 const handleButtonClick = () => {
   isLoading.value = true
   setTimeout(() => {
     isLoading.value = false
   }, 1000)
-  console.log('Input value:', inputValue.value);
+  console.log('Input value:', inputText.value);
 }
 
 /*
