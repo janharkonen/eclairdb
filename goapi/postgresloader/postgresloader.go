@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
+	"errors"
 	"sync"
 
 	_ "github.com/lib/pq"
@@ -28,7 +29,7 @@ func LoadData(postgresurl string, db *types.Database) error {
 	mu.Unlock()
 
 	if err := dbclient.Ping(); err != nil {
-		return err
+		return errors.New("postgresloader: " + err.Error())
 	}
 	query := `
 		SELECT 

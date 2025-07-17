@@ -16,9 +16,10 @@ v-bind: is the same as :
     <div class="relative flex w-full h-12 md:h-16">
       <input 
         type="text" 
+        v-model="inputText"
         :name="service"
         :placeholder="placeholder" 
-        class="flex-1 text-black pl-12 md:pl-14 pr-4 py-2 border-2 placeholder:text-black/50 border-cyan-300/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 shadow-inner shadow-cyan-200/20"
+        class="flex-1 text-xs text-black px-12 md:px-14 pr-4 py-2 border-2 placeholder:text-black/50 border-cyan-300/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 shadow-inner shadow-cyan-200/20"
       >
       </input>
       <div class="absolute left-2 top-1/2 transform -translate-y-1/2">
@@ -32,22 +33,24 @@ v-bind: is the same as :
         class="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 bg-cyan-500 hover:bg-cyan-600 h-8 w-8 md:h-10 md:w-10 rounded flex items-center justify-center transition-colors duration-200 border border-blue-300/3 hover:cursor-pointer "
         type="button"
         aria-label="Submit"
-        :disabled="textisEmpty"
+        :disabled="textisEmpty || isPending"
         @click="handleButtonClick"
         :title="`Connect to database using ${service}`"
       >
-        <ArrowRight v-if="!isLoading" />
+        <ArrowRight v-if="!isPending" />
         <Loader2 v-else class="animate-spin" />
       </button>
+      <div v-if="showError && error" class="absolute bg-red-200 rounded-md right-0 top-[120%] transform text-xs text-red-500 px-2">
+        {{ error.message }}
+      </div>
     </div>
   </form>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { onMounted } from 'vue'
 import { ArrowRight, Loader2 } from 'lucide-vue-next'
-import { useQuery } from '@tanstack/vue-query';
+import { useMutation } from '@tanstack/vue-query';
 
 interface Props {
   imgSrc: string
@@ -58,45 +61,45 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const inputValue = ref("")
-const isLoading = ref(false)
-const textisEmpty = computed(() => {
-  return (inputValue.value === "")
-})
+const inputText = ref("")
+const textisEmpty = computed(() => (inputText.value.trim() === ""))
+const showError = ref(false)
 
-onMounted(() => {
-  const inputElement = document.querySelector(`input[name="${props.service}"]`)
-  if (inputElement) {
-    // Set initial value
-    inputValue.value = (inputElement as HTMLInputElement).value
-    
-    // Add event listener to update the value when input changes
-    inputElement.addEventListener('input', (e) => {
-      inputValue.value = (e.target as HTMLInputElement).value
-    })
+const { mutate, data, error, isPending, isError } = useMutation({
+  mutationFn: async (uri: string) => {
+    const response = await fetch(`http://goapi:8081/${props.apiroute}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uri: uri })
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+    return response.json();
+  },
+  onSuccess: (data) => {
+    console.log('Database connection successful:', data);
+  },
+  onError: (error) => {
+    console.error('Database connection failed:', error);
+    showError.value = true;
+    setTimeout(() => {
+      showError.value = false;
+    }, 3000);
   }
+})
+
+const handleButtonClick = async () => {
+  if (textisEmpty.value) return;
   
-})
-const handleButtonClick = () => {
-  isLoading.value = true
-  setTimeout(() => {
-    isLoading.value = false
-  }, 1000)
-  console.log('Input value:', inputValue.value);
+  try {
+    mutate(inputText.value);
+  } catch (err) {
+    console.log(err)
+    console.error('Error connecting to database:', err);
+  }
 }
-
-/*
-
-const { data, isLoading, error } = useQuery({
-  queryKey: ['databaseConnect', props.apiroute],
-  queryFn: () => fetch(`http://goapi:8081/${props.apiroute}`, {
-    method: 'POST',
-    body: JSON.stringify({
-      uri: document.querySelector('input')?.value
-    })
-  }).then(res => res.json())
-})
-*/
 </script>
 
 <style scoped>
