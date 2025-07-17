@@ -17,7 +17,7 @@ func main() {
 	router := gin.Default()
 
 	router.Use(corsConfig)
-	router.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "pong32\n") })
+	router.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "pong33\n") })
 	router.GET("/data", getData)
 	router.POST("/connect-postgres", connectPostgres)
 	router.Run("0.0.0.0:8081")
@@ -40,17 +40,17 @@ func getData(ginctx *gin.Context) {
 
 func connectPostgres(ginctx *gin.Context) {
 	var requestBody struct {
-		PostgresURL string `json:"postgresurl"`
+		URI string `json:"uri"`
 	}
 	if err := ginctx.ShouldBindJSON(&requestBody); err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	postgresurl := requestBody.PostgresURL
+	postgresurl := requestBody.URI
 	err := postgresloader.LoadData(postgresurl, &db)
 	if err != nil {
-		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": "GIN ERROR: " + err.Error()})
 		return
 	}
 

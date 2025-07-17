@@ -35,7 +35,7 @@ services:
     develop:
       watch:
         - action: rebuild
-          path: ./goapi/main.go
+          path: ./goapi
 
 networks:
   app-network:
