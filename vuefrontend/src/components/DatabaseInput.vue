@@ -67,7 +67,7 @@ const showError = ref(false)
 
 const { mutate, data, error, isPending, isError } = useMutation({
   mutationFn: async (uri: string) => {
-    const response = await fetch(`http://goapi:8081/${props.apiroute}`, {
+    const response = await fetch(`/api/${props.apiroute}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uri: uri })
