@@ -16,7 +16,7 @@ COPY ./vuefrontend/ .
 RUN npm run build
 
 # This is for deploying the app in a single container
-FROM node:24
+FROM node:24-bookworm-slim
 RUN npm install -g http-server
 WORKDIR /app
 
