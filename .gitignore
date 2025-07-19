@@ -1,2 +1,3 @@
 main
 goapi/*.sh
+.env
