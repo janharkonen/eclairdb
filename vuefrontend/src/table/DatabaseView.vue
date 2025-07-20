@@ -16,9 +16,14 @@
       @mousedown="startResize"
     ></div>
     <div class="flex-1 h-full">
+      <div v-if="!table || !schema" class="flex justify-center items-center h-full">
+        <p>No table selected</p>
+      </div>
       <Table 
-        v-model:shownTable="table" 
-        v-model:shownSchema="schema" 
+        v-else
+        :shownTable="table" 
+        :shownSchema="schema" 
+        :hash="hash"
       />
       <!-- Content area will go here -->
     </div>
@@ -37,7 +42,7 @@ const sidebarWidth = ref(180)
 const table = ref<string>('')
 const schema = ref<string>('')
 const route = useRoute()
-const hash = route.params.hash
+const hash = route.params.hash as string
 
 const { data, isLoading, error } = useQuery({
   queryKey: ['schemasAndTables', hash],
