@@ -20,6 +20,7 @@ func main() {
 	router.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "pong33\n") })
 	router.GET("/data", getData)
 	router.POST("/connect-postgres", connectPostgres)
+	router.GET("/get-schemas-and-tables", getSchemasAndTables)
 	router.Run("0.0.0.0:8081")
 }
 
@@ -48,11 +49,30 @@ func connectPostgres(ginctx *gin.Context) {
 	}
 
 	postgresurl := requestBody.URI
-	err := postgresloader.LoadData(postgresurl, &db)
+	postgresurlsha, err := postgresloader.LoadData(postgresurl, &db)
 	if err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": "GIN ERROR: " + err.Error()})
 		return
 	}
 
-	ginctx.JSON(http.StatusOK, db)
+	ginctx.JSON(http.StatusOK, postgresurlsha)
+}
+
+func getSchemasAndTables(ginctx *gin.Context) {
+	fmt.Println("part 1")
+	hash := ginctx.Query("hash")
+	fmt.Println("part 2")
+	if hash == "" {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Missing hash parameter"})
+		return
+	}
+	fmt.Println("part 3")
+	dbmap, ok := db[types.Sha(hash)]
+	fmt.Println("part 4")
+	if !ok {
+		ginctx.JSON(http.StatusNotFound, gin.H{"error": "Hash not found"})
+		return
+	}
+	fmt.Println("part 5")
+	ginctx.JSON(http.StatusOK, dbmap)
 }

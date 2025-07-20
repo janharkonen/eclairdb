@@ -6,7 +6,7 @@ import { VueQueryPlugin } from '@tanstack/vue-query'
 import { createWebHistory, createRouter } from 'vue-router'
 
 import Homepage from './Homepage.vue'
-import Table from './Table.vue'
+import Table from './table/Table.vue'
 
 const routes = [
   { path: '/', component: Homepage },
