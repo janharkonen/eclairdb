@@ -6,11 +6,11 @@ import { VueQueryPlugin } from '@tanstack/vue-query'
 import { createWebHistory, createRouter } from 'vue-router'
 
 import Homepage from './Homepage.vue'
-import Table from './table/Table.vue'
+import DatabaseView from './table/DatabaseView.vue'
 
 const routes = [
   { path: '/', component: Homepage },
-  { path: '/table/:hash', component: Table },
+  { path: '/database/:hash', component: DatabaseView },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 const router = createRouter({

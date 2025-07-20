@@ -82,7 +82,7 @@ const { mutate, error, isPending } = useMutation({
     return response.json();
   },
   onSuccess: (data: string) => {
-    router.push(`/table/${data}`);
+    router.push(`/database/${data}`);
   },
   onError: (error: Error) => {
     console.error('Database connection failed:', error);
