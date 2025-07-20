@@ -16,6 +16,7 @@ v-bind: is the same as :
     <div class="relative flex w-full h-12 md:h-16">
       <input 
         type="text" 
+        autocomplete="off"
         v-model="inputText"
         :name="service"
         :placeholder="placeholder" 
@@ -51,6 +52,7 @@ v-bind: is the same as :
 import { ref, computed } from 'vue'
 import { ArrowRight, Loader2 } from 'lucide-vue-next'
 import { useMutation } from '@tanstack/vue-query';
+import { useRouter } from 'vue-router';
 
 interface Props {
   imgSrc: string
@@ -64,8 +66,9 @@ const props = defineProps<Props>()
 const inputText = ref("")
 const textisEmpty = computed(() => (inputText.value.trim() === ""))
 const showError = ref(false)
+const router = useRouter()
 
-const { mutate, data, error, isPending, isError } = useMutation({
+const { mutate, error, isPending } = useMutation({
   mutationFn: async (uri: string) => {
     const response = await fetch(`/api/${props.apiroute}`, {
       method: 'POST',
@@ -78,10 +81,10 @@ const { mutate, data, error, isPending, isError } = useMutation({
     }
     return response.json();
   },
-  onSuccess: (data) => {
-    console.log('Database connection successful:', data);
+  onSuccess: (data: string) => {
+    router.push(`/table/${data}`);
   },
-  onError: (error) => {
+  onError: (error: Error) => {
     console.error('Database connection failed:', error);
     showError.value = true;
     setTimeout(() => {

@@ -12,7 +12,7 @@ import (
 	"github.com/janharkonen/eclairdb/types"
 )
 
-func LoadData(postgresurl string, db *types.Database) error {
+func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 
 	hasher := sha256.New()
 	hasher.Write([]byte(postgresurl))
@@ -20,7 +20,7 @@ func LoadData(postgresurl string, db *types.Database) error {
 
 	dbclient, err := sql.Open("postgres", postgresurl)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer dbclient.Close()
 	mu := sync.Mutex{}
@@ -29,7 +29,7 @@ func LoadData(postgresurl string, db *types.Database) error {
 	mu.Unlock()
 
 	if err := dbclient.Ping(); err != nil {
-		return errors.New("postgresloader: " + err.Error())
+		return "", errors.New("postgresloader: " + err.Error())
 	}
 	query := `
 		SELECT 
@@ -50,7 +50,7 @@ func LoadData(postgresurl string, db *types.Database) error {
 
 	schemaTablesRows, err := dbclient.Query(query)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer schemaTablesRows.Close()
 
@@ -58,7 +58,7 @@ func LoadData(postgresurl string, db *types.Database) error {
 	for schemaTablesRows.Next() {
 		var schemaName, tableName sql.NullString
 		if err := schemaTablesRows.Scan(&schemaName, &tableName); err != nil {
-			return err
+			return "", err
 		}
 
 		if schemaName.Valid {
@@ -74,9 +74,9 @@ func LoadData(postgresurl string, db *types.Database) error {
 	}
 
 	if err := schemaTablesRows.Err(); err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return postgresurlsha, nil
 }
 
 func Addition(a int, b int) int {

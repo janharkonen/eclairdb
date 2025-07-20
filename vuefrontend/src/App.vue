@@ -1,7 +1,5 @@
 <template>
   <main class="w-full h-full flex flex-col items-center justify-center">
-    <RouterLink to="/" class="hover:text-gray-300">Home</RouterLink>
-    <RouterLink to="/table" class="hover:text-gray-300">Table</RouterLink>
     <RouterView />
   </main>
   <footer class="flex-none w-full bg-gray-100 text-gray-800">
