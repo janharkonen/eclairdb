@@ -25,7 +25,7 @@ import Sidebar from './Sidebar.vue'
 import { ref } from 'vue'
 
 
-const sidebarWidth = ref(160)
+const sidebarWidth = ref(180)
 const route = useRoute()
 const hash = route.params.hash
 
@@ -51,7 +51,7 @@ const startResize = (event: MouseEvent) => {
   const handleMouseMove = (moveEvent: MouseEvent) => {
     const currentX = moveEvent.clientX
     const currentWidth = (startWidth ?? 0) + (currentX - startX)
-    sidebarWidth.value = Math.max(currentWidth, 80)
+    sidebarWidth.value = Math.max(currentWidth, 120)
   }
 
   const handleMouseUp = () => {
