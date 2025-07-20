@@ -1,6 +1,5 @@
 <template>
     <div class="text-white h-full w-full sidebar bg-cyan-800 p-4  overflow-y-auto border-r-2 border-cyan-300">
-        
         <div v-for="schemaName in Object.keys(props.data)" :key="schemaName" class="mb-2">
             <div 
                 class="flex items-center cursor-pointer hover:bg-cyan-700 p-1 rounded"
@@ -9,31 +8,37 @@
                 <span class="mr-2 select-none overflow-hidden text-ellipsis whitespace-nowrap">{{ isSchemaOpen[schemaName] ? `▼ ${schemaName}` : `► ${schemaName}` }}</span>
             </div>
             <div v-if="isSchemaOpen[schemaName]" class="ml-4 mt-1">
-                <div 
+                <button 
                     v-for="tableName in Object.keys(props.data[schemaName])" 
                     :key="tableName"
-                    class="px-2 text-cyan-300 hover:bg-cyan-700 p-1 rounded cursor-pointer select-none overflow-hidden text-ellipsis whitespace-nowrap"
+                    class="px-2 w-full text-left text-cyan-300 hover:bg-cyan-700 p-1 rounded cursor-pointer select-none overflow-hidden text-ellipsis whitespace-nowrap"
+                    @click="selectTable(schemaName, tableName)"
                 >
                     {{ tableName }}
-                </div>
+                </button>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, type PropType, ref } from 'vue'
+import { defineProps, ref } from 'vue'
 
-const props = defineProps({
-    data: {
-        type: Object as PropType<any>,
-        required: true
-    }
-})
+const props = defineProps<{
+    data: Record<string, Record<string, string[]>>,
+}>()
 
 const isSchemaOpen = ref<Record<string, boolean>>({})
 
 const toggleSchema = (schemaName: string) => {
     isSchemaOpen.value[schemaName] = !isSchemaOpen.value[schemaName]
+}
+
+const selectedTable = defineModel<string>('selectedTable')
+const selectedSchema = defineModel<string>('selectedSchema')
+
+const selectTable = (schemaName: string, tableName: string) => {
+    selectedTable.value = tableName
+    selectedSchema.value = schemaName
 }
 </script>

@@ -6,13 +6,18 @@
       ref="sidebarContainer"
       :style="{ width: sidebarWidth + 'px' }"
       >
-      <Sidebar :data="data" class="flex-grow" />
+      <Sidebar 
+        class="flex-grow" 
+        :data="data" 
+        v-model:selectedTable="table" 
+        v-model:selectedSchema="schema" />
     </div>
     <div class="w-1 h-full cursor-ew-resize bg-cyan-300 hover:bg-cyan-400 active:bg-cyan-500" 
       @mousedown="startResize"
     ></div>
     <div class="flex-1 h-full">
-      <p>asd</p>
+      <p>Table: {{ table }}</p>
+      <p>Schema: {{ schema }}</p>
       <!-- Content area will go here -->
     </div>
   </div>
@@ -26,6 +31,8 @@ import { ref } from 'vue'
 
 
 const sidebarWidth = ref(180)
+const table = ref<string>('')
+const schema = ref<string>('')
 const route = useRoute()
 const hash = route.params.hash
 
