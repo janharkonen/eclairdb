@@ -16,8 +16,10 @@
       @mousedown="startResize"
     ></div>
     <div class="flex-1 h-full">
-      <p>Table: {{ table }}</p>
-      <p>Schema: {{ schema }}</p>
+      <Table 
+        v-model:shownTable="table" 
+        v-model:shownSchema="schema" 
+      />
       <!-- Content area will go here -->
     </div>
   </div>
@@ -27,6 +29,7 @@
 import { useRoute } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import Sidebar from './Sidebar.vue'
+import Table from './Table.vue'
 import { ref } from 'vue'
 
 

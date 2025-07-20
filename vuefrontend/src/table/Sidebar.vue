@@ -11,7 +11,24 @@
                 <button 
                     v-for="tableName in Object.keys(props.data[schemaName])" 
                     :key="tableName"
-                    class="px-2 w-full text-left text-cyan-300 hover:bg-cyan-700 p-1 rounded cursor-pointer select-none overflow-hidden text-ellipsis whitespace-nowrap"
+                    :class="
+                        selectedTable !== tableName || selectedSchema !== schemaName ? 
+                        'text-cyan-300 bg-cyan-800 hover:bg-cyan-900' 
+                        : 
+                        'text-cyan-900 bg-cyan-400 hover:bg-cyan-100'
+                    "
+                    class="
+                        px-2 
+                        w-full 
+                        text-left 
+                        p-1 
+                        rounded 
+                        cursor-pointer 
+                        select-none 
+                        overflow-hidden 
+                        text-ellipsis 
+                        whitespace-nowrap
+                        "
                     @click="selectTable(schemaName, tableName)"
                 >
                     {{ tableName }}
