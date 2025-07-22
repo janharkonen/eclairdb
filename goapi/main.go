@@ -96,7 +96,7 @@ func getFilteredPaginatedProducts(ginctx *gin.Context) {
 	fmt.Println(schema)
 	fmt.Println(table)
 
-	if db[types.Sha(hash)][types.Schema(schema)][types.Table(table)] == nil {
+	if db[types.Sha(hash)][types.SchemaName(schema)][types.TableName(table)] == nil {
 		fmt.Println("Table not found")
 		return
 	}

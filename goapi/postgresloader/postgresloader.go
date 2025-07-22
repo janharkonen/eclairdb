@@ -25,7 +25,7 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 	defer dbclient.Close()
 	mu := sync.Mutex{}
 	mu.Lock()
-	(*db)[postgresurlsha] = make(map[types.Schema]map[types.Table]map[types.Key]types.Value)
+	(*db)[postgresurlsha] = make(types.Schema)
 	mu.Unlock()
 
 	if err := dbclient.Ping(); err != nil {
@@ -64,12 +64,12 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 		if schemaName.Valid {
 			if tableName.Valid {
 				mu.Lock()
-				if _, exists := (*db)[postgresurlsha][types.Schema(schemaName.String)]; !exists {
-					(*db)[postgresurlsha][types.Schema(schemaName.String)] = make(map[types.Table]map[types.Key]types.Value)
+				if _, exists := (*db)[postgresurlsha][types.SchemaName(schemaName.String)]; !exists {
+					(*db)[postgresurlsha][types.SchemaName(schemaName.String)] = make(types.Table)
 				}
-				(*db)[postgresurlsha][types.Schema(schemaName.String)][types.Table(tableName.String)] = make(map[types.Key]types.Value)
+				(*db)[postgresurlsha][types.SchemaName(schemaName.String)][types.TableName(tableName.String)] = make([]types.Row, 0)
 				mu.Unlock()
-				addTableToDb(postgresurlsha, types.Schema(schemaName.String), types.Table(tableName.String), db, dbclient)
+				addTableToDb(postgresurlsha, types.SchemaName(schemaName.String), types.TableName(tableName.String), db, dbclient)
 			}
 		}
 	}
