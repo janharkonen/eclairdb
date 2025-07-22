@@ -69,6 +69,7 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 				}
 				(*db)[postgresurlsha][types.Schema(schemaName.String)][types.Table(tableName.String)] = make(map[types.Key]types.Value)
 				mu.Unlock()
+				addTableToDb(postgresurlsha, types.Schema(schemaName.String), types.Table(tableName.String), db, dbclient)
 			}
 		}
 	}
@@ -77,6 +78,26 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 		return "", err
 	}
 	return postgresurlsha, nil
+}
+
+func addTableToDb(postgresurlsha types.Sha, schema types.Schema, table types.Table, db *types.Database, dbclient *sql.DB) {
+
+	query := `SELECT * FROM $1.$2`
+	columnsRows, err := dbclient.Query(query, schema, table)
+	if err != nil {
+		return
+	}
+	defer columnsRows.Close()
+
+	for columnsRows.Next() {
+		var columnName, dataType sql.NullString
+		if err := columnsRows.Scan(&columnName, &dataType); err != nil {
+			return
+		}
+		if columnName.Valid {
+			(*db)[postgresurlsha][schema][table][types.Key(columnName.String)] = types.Value(dataType.String)
+		}
+	}
 }
 
 func Addition(a int, b int) int {
