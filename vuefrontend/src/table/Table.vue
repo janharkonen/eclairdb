@@ -1,8 +1,7 @@
 <template>
-  <div class="flex justify-center items-center h-full">
-    <p>Hash: {{ hash }}</p>
-    <p>Table: {{ shownTable }}</p>
-    <p>Schema: {{ shownSchema }}</p>
+  <div class="flex flex-col justify-center items-center h-full">
+    <p>Params: {{ params }}</p>
+    <p>Data: {{ data }}</p>
   </div>
 </template>
 
@@ -22,7 +21,7 @@ const params = computed(() => {
 })
 
 const { data, isLoading, error } = useQuery({
-  queryKey: ['table', hash, shownSchema, shownTable],
+  queryKey: ['table', params],
   queryFn: async () => {
     const response = await fetch(`/api/filtered_paginated_products?${params.value}`)
     if (!response.ok) {
@@ -32,5 +31,5 @@ const { data, isLoading, error } = useQuery({
   },
 })
 
-console.log(data)
+console.log(params)
 </script>
