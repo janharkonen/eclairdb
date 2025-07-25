@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"sync"
 
 	_ "github.com/lib/pq"
@@ -55,6 +56,7 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 	defer schemaTablesRows.Close()
 
 	// Process the results and build the data structure
+	wg := sync.WaitGroup{}
 	for schemaTablesRows.Next() {
 		var schemaName, tableName sql.NullString
 		if err := schemaTablesRows.Scan(&schemaName, &tableName); err != nil {
@@ -69,35 +71,60 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 				}
 				(*db)[postgresurlsha][types.SchemaName(schemaName.String)][types.TableName(tableName.String)] = make([]types.Row, 0)
 				mu.Unlock()
-				addTableToDb(postgresurlsha, types.SchemaName(schemaName.String), types.TableName(tableName.String), db, dbclient)
+				wg.Add(1)
+				go addTableToDb(&wg, postgresurlsha, types.SchemaName(schemaName.String), types.TableName(tableName.String), db, dbclient)
 			}
 		}
 	}
-
+	wg.Wait()
 	if err := schemaTablesRows.Err(); err != nil {
 		return "", err
 	}
 	return postgresurlsha, nil
 }
 
-func addTableToDb(postgresurlsha types.Sha, schema types.Schema, table types.Table, db *types.Database, dbclient *sql.DB) {
-
-	query := `SELECT * FROM $1.$2`
-	columnsRows, err := dbclient.Query(query, schema, table)
+func addTableToDb(wg *sync.WaitGroup, postgresurlsha types.Sha, schema types.SchemaName, table types.TableName, db *types.Database, dbclient *sql.DB) {
+	defer wg.Done()
+	query := fmt.Sprintf("SELECT * FROM %s.%s", string(schema), string(table))
+	fmt.Println(query)
+	dbRows, err := dbclient.Query(query)
 	if err != nil {
 		return
 	}
-	defer columnsRows.Close()
+	defer dbRows.Close()
 
-	for columnsRows.Next() {
-		var columnName, dataType sql.NullString
-		if err := columnsRows.Scan(&columnName, &dataType); err != nil {
+	var rows []types.Row
+	var columnNames []string
+	columnNames, err = dbRows.Columns()
+	if err != nil {
+		return
+	}
+
+	for dbRows.Next() {
+		scanArgs := make([]interface{}, len(columnNames))
+		values := make([]sql.NullString, len(columnNames))
+		for i := range values {
+			scanArgs[i] = &values[i]
+		}
+		if err := dbRows.Scan(scanArgs...); err != nil {
 			return
 		}
-		if columnName.Valid {
-			(*db)[postgresurlsha][schema][table][types.Key(columnName.String)] = types.Value(dataType.String)
+		row := make(types.Row)
+		for i, columnName := range columnNames {
+			if values[i].Valid {
+				// If the value is not NULL, use the string value
+				valueStr := values[i].String
+				row[types.ColumnName(columnName)] = types.Value(valueStr)
+			} else {
+				// If the value is NULL, use an empty string
+				row[types.ColumnName(columnName)] = types.Value("")
+			}
 		}
+
+		rows = append(rows, row)
 	}
+
+	(*db)[postgresurlsha][schema][table] = rows
 }
 
 func Addition(a int, b int) int {

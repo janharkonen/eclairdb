@@ -23,6 +23,7 @@ func main() {
 	router.GET("/data", getData)
 	router.POST("/connect-postgres", connectPostgres)
 	router.GET("/get-schemas-and-tables", getSchemasAndTables)
+	// TODO: change name of method
 	router.GET("/filtered_paginated_products", getFilteredPaginatedProducts)
 	router.Run("0.0.0.0:8081")
 }
@@ -96,16 +97,14 @@ func getFilteredPaginatedProducts(ginctx *gin.Context) {
 	fmt.Println(schema)
 	fmt.Println(table)
 
-	if db[types.Sha(hash)][types.SchemaName(schema)][types.TableName(table)] == nil {
+	tableData := db[types.Sha(hash)][types.SchemaName(schema)][types.TableName(table)]
+	if tableData == nil {
 		fmt.Println("Table not found")
 		return
 	}
 
-	var filteredRows = getFilteredPaginatedRows(filterParams, indexStart, indexEnd)
+	var filteredRows = getFilteredPaginatedRows(tableData, filterParams, indexStart, indexEnd)
 
-	fmt.Println(filterParams)
-	fmt.Println(indexStart)
-	fmt.Println(indexEnd)
 	ginctx.JSON(http.StatusOK, filteredRows)
 }
 
@@ -134,10 +133,19 @@ func parseIndexes(queryParams map[string][]string) (int, int, error) {
 	return indexStart, indexEnd, err
 }
 
-func getFilteredPaginatedRows(filterParams map[string]string, indexStart int, indexEnd int) []map[string]string {
-	return []map[string]string{
-		{"id": "1", "name": "Product 1"},
-		{"id": "2", "name": "Product 2"},
-		{"id": "3", "name": "Product 3"},
+func getFilteredPaginatedRows(tableData []types.Row, filterParams map[string]string, indexStart int, indexEnd int) []types.Row {
+	filteredRows := make([]types.Row, 0)
+	lastIndex := min(indexEnd, len(tableData))
+	for i := indexStart; i < lastIndex; i++ {
+		filteredRows = append(filteredRows, tableData[i])
 	}
+	//for _, row := range tableData {
+	//	if row[types.ColumnName(filterParams["id"])] == types.Value(filterParams["id"]) {
+	//		filteredRows = append(filteredRows, row)
+	//	}
+	//}
+
+	fmt.Println(filterParams)
+
+	return filteredRows
 }
