@@ -23,7 +23,6 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 	if err != nil {
 		return "", err
 	}
-	defer dbclient.Close()
 	mu := sync.Mutex{}
 	mu.Lock()
 	(*db)[postgresurlsha] = make(types.Schema)
@@ -56,7 +55,9 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 	defer schemaTablesRows.Close()
 
 	// Process the results and build the data structure
-	wg := sync.WaitGroup{}
+	var doneChannel = make(chan struct{})
+	var numberOfTables = 0
+
 	for schemaTablesRows.Next() {
 		var schemaName, tableName sql.NullString
 		if err := schemaTablesRows.Scan(&schemaName, &tableName); err != nil {
@@ -65,26 +66,26 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 
 		if schemaName.Valid {
 			if tableName.Valid {
+				numberOfTables++
 				mu.Lock()
 				if _, exists := (*db)[postgresurlsha][types.SchemaName(schemaName.String)]; !exists {
 					(*db)[postgresurlsha][types.SchemaName(schemaName.String)] = make(types.Table)
 				}
 				(*db)[postgresurlsha][types.SchemaName(schemaName.String)][types.TableName(tableName.String)] = make([]types.Row, 0)
 				mu.Unlock()
-				wg.Add(1)
-				go addTableToDb(&wg, postgresurlsha, types.SchemaName(schemaName.String), types.TableName(tableName.String), db, dbclient)
+				go addTableToDb(postgresurlsha, types.SchemaName(schemaName.String), types.TableName(tableName.String), db, dbclient, doneChannel)
 			}
 		}
 	}
-	wg.Wait()
+	go closeDbClientWhenDone(dbclient, doneChannel, numberOfTables)
 	if err := schemaTablesRows.Err(); err != nil {
 		return "", err
 	}
 	return postgresurlsha, nil
 }
 
-func addTableToDb(wg *sync.WaitGroup, postgresurlsha types.Sha, schema types.SchemaName, table types.TableName, db *types.Database, dbclient *sql.DB) {
-	defer wg.Done()
+func addTableToDb(postgresurlsha types.Sha, schema types.SchemaName, table types.TableName, db *types.Database, dbclient *sql.DB, doneChannel chan struct{}) {
+	defer func() { doneChannel <- struct{}{} }()
 	query := fmt.Sprintf("SELECT * FROM %s.%s", string(schema), string(table))
 	fmt.Println(query)
 	dbRows, err := dbclient.Query(query)
@@ -125,6 +126,18 @@ func addTableToDb(wg *sync.WaitGroup, postgresurlsha types.Sha, schema types.Sch
 	}
 
 	(*db)[postgresurlsha][schema][table] = rows
+	fmt.Println(query + " finished")
+}
+
+func closeDbClientWhenDone(dbclient *sql.DB, channel chan struct{}, numberOfTables int) {
+
+	for i := 0; i < numberOfTables; i++ {
+		<-channel
+		fmt.Println("channel gotten!!")
+	}
+	fmt.Println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX dbclient closed XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", numberOfTables)
+	dbclient.Close()
+	//defer dbclient.Close()
 }
 
 func Addition(a int, b int) int {
