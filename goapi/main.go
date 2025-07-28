@@ -12,10 +12,12 @@ import (
 )
 
 var db types.Databases
+var doneSchemaAndTableChannelMap types.DoneSchemaAndTableChannelMap
 
 func main() {
 	fmt.Println("Starting Go API")
 	db = make(types.Databases)
+	doneSchemaAndTableChannelMap = make(types.DoneSchemaAndTableChannelMap)
 	router := gin.Default()
 
 	router.Use(corsConfig)
@@ -23,6 +25,7 @@ func main() {
 	router.GET("/data", getData)
 	router.POST("/connect-postgres", connectPostgres)
 	router.GET("/get-schemas-and-tables", getSchemasAndTables)
+	router.GET("/get-schemas-and-tables-stream", getSchemasAndTablesStream)
 	// TODO: change name of method
 	router.GET("/filtered_paginated_products", getFilteredPaginatedProducts)
 	router.Run("0.0.0.0:8081")
@@ -53,7 +56,7 @@ func connectPostgres(ginctx *gin.Context) {
 	}
 
 	postgresurl := requestBody.URI
-	postgresurlsha, err := postgresloader.LoadData(postgresurl, &db)
+	postgresurlsha, err := postgresloader.LoadData(postgresurl, &db, &doneSchemaAndTableChannelMap)
 	if err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": "GIN ERROR: " + err.Error()})
 		return
@@ -68,12 +71,44 @@ func getSchemasAndTables(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Missing hash parameter"})
 		return
 	}
-	dbmap, ok := db[types.Sha(hash)]
-	if !ok {
+	schemaTableMap := make(map[string]map[string]struct{})
+
+	if dbData, ok := db[types.Sha(hash)]; ok {
+		for schemaName, tables := range dbData {
+			schemaTableMap[string(schemaName)] = make(map[string]struct{})
+			for tableName := range tables {
+				schemaTableMap[string(schemaName)][string(tableName)] = struct{}{}
+			}
+		}
+		ginctx.JSON(http.StatusOK, schemaTableMap)
+	} else {
 		ginctx.JSON(http.StatusNotFound, gin.H{"error": "Hash not found"})
 		return
 	}
-	ginctx.JSON(http.StatusOK, dbmap)
+
+}
+
+func getSchemasAndTablesStream(ginctx *gin.Context) {
+
+	ginctx.Header("Content-Type", "text/event-stream")
+	ginctx.Header("Cache-Control", "no-cache")
+	ginctx.Header("Connection", "keep-alive")
+	//ginctx.Header("Transfer-Encoding", "chunked")
+	//ginctx.Header("X-Accel-Buffering", "no")
+	//ginctx.Header("X-Frame-Options", "SAMEORIGIN")
+	//ginctx.Header("X-XSS-Protection", "1; mode=block")
+	hash := ginctx.Query("hash")
+	if hash == "" {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Missing hash parameter"})
+		return
+	}
+
+	channel := doneSchemaAndTableChannelMap[types.Sha(hash)]
+	for {
+		fmt.Println("data123123")
+		data := <-channel
+		fmt.Println(data)
+	}
 }
 
 func getFilteredPaginatedProducts(ginctx *gin.Context) {

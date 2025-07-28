@@ -13,12 +13,18 @@ import (
 	"github.com/janharkonen/eclairdb/types"
 )
 
-func LoadData(postgresurl string, db *types.Databases) (types.Sha, error) {
+func LoadData(
+	postgresurl string,
+	db *types.Databases,
+	doneSchemaAndTableChannelMap *types.DoneSchemaAndTableChannelMap,
+) (types.Sha, error) {
 
 	hasher := sha256.New()
 	hasher.Write([]byte(postgresurl))
 	postgresurlsha := types.Sha(base64.URLEncoding.EncodeToString(hasher.Sum(nil)))
 
+	doneSchemaAndTableChannel := make(types.DoneSchemaAndTableChannel)
+	(*doneSchemaAndTableChannelMap)[postgresurlsha] = doneSchemaAndTableChannel
 	dbclient, err := sql.Open("postgres", postgresurl)
 	if err != nil {
 		return "", err
@@ -73,7 +79,7 @@ func LoadData(postgresurl string, db *types.Databases) (types.Sha, error) {
 				}
 				(*db)[postgresurlsha][types.SchemaName(schemaName.String)][types.TableName(tableName.String)] = make([]types.Row, 0)
 				mu.Unlock()
-				go addTableToDb(postgresurlsha, types.SchemaName(schemaName.String), types.TableName(tableName.String), db, dbclient, doneChannel)
+				go addTableToDb(postgresurlsha, types.SchemaName(schemaName.String), types.TableName(tableName.String), db, dbclient, doneChannel, &doneSchemaAndTableChannel)
 			}
 		}
 	}
@@ -84,8 +90,19 @@ func LoadData(postgresurl string, db *types.Databases) (types.Sha, error) {
 	return postgresurlsha, nil
 }
 
-func addTableToDb(postgresurlsha types.Sha, schema types.SchemaName, table types.TableName, db *types.Databases, dbclient *sql.DB, doneChannel chan struct{}) {
-	defer func() { doneChannel <- struct{}{} }()
+func addTableToDb(
+	postgresurlsha types.Sha,
+	schema types.SchemaName,
+	table types.TableName,
+	db *types.Databases,
+	dbclient *sql.DB,
+	doneChannel chan struct{},
+	doneSchemaAndTableChannel *types.DoneSchemaAndTableChannel,
+) {
+	defer func() {
+		doneChannel <- struct{}{}
+		(*doneSchemaAndTableChannel) <- [2]string{string(schema), string(table)}
+	}()
 	query := fmt.Sprintf("SELECT * FROM %s.%s", string(schema), string(table))
 	fmt.Println(query)
 	dbRows, err := dbclient.Query(query)

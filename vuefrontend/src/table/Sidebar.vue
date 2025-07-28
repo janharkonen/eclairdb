@@ -58,4 +58,5 @@ const selectTable = (schemaName: string, tableName: string) => {
     selectedTable.value = tableName
     selectedSchema.value = schemaName
 }
+
 </script>
