@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"sync"
 
 	_ "github.com/lib/pq"
@@ -12,20 +13,25 @@ import (
 	"github.com/janharkonen/eclairdb/types"
 )
 
-func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
+func LoadData(
+	postgresurl string,
+	db *types.Databases,
+	doneSchemaAndTableChannelMap *types.DoneSchemaAndTableChannelMap,
+) (types.Sha, error) {
 
 	hasher := sha256.New()
 	hasher.Write([]byte(postgresurl))
 	postgresurlsha := types.Sha(base64.URLEncoding.EncodeToString(hasher.Sum(nil)))
 
+	doneSchemaAndTableChannel := make(types.DoneSchemaAndTableChannel)
+	(*doneSchemaAndTableChannelMap)[postgresurlsha] = doneSchemaAndTableChannel
 	dbclient, err := sql.Open("postgres", postgresurl)
 	if err != nil {
 		return "", err
 	}
-	defer dbclient.Close()
 	mu := sync.Mutex{}
 	mu.Lock()
-	(*db)[postgresurlsha] = make(map[types.Schema]map[types.Table]map[types.Key]types.Value)
+	(*db)[postgresurlsha] = make(types.Schemas)
 	mu.Unlock()
 
 	if err := dbclient.Ping(); err != nil {
@@ -55,6 +61,9 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 	defer schemaTablesRows.Close()
 
 	// Process the results and build the data structure
+	var doneChannel = make(chan struct{})
+	var numberOfTables = 0
+
 	for schemaTablesRows.Next() {
 		var schemaName, tableName sql.NullString
 		if err := schemaTablesRows.Scan(&schemaName, &tableName); err != nil {
@@ -63,20 +72,89 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 
 		if schemaName.Valid {
 			if tableName.Valid {
+				numberOfTables++
 				mu.Lock()
-				if _, exists := (*db)[postgresurlsha][types.Schema(schemaName.String)]; !exists {
-					(*db)[postgresurlsha][types.Schema(schemaName.String)] = make(map[types.Table]map[types.Key]types.Value)
+				if _, exists := (*db)[postgresurlsha][types.SchemaName(schemaName.String)]; !exists {
+					(*db)[postgresurlsha][types.SchemaName(schemaName.String)] = make(types.Tables)
 				}
-				(*db)[postgresurlsha][types.Schema(schemaName.String)][types.Table(tableName.String)] = make(map[types.Key]types.Value)
+				(*db)[postgresurlsha][types.SchemaName(schemaName.String)][types.TableName(tableName.String)] = make([]types.Row, 0)
 				mu.Unlock()
+				go addTableToDb(postgresurlsha, types.SchemaName(schemaName.String), types.TableName(tableName.String), db, dbclient, doneChannel, &doneSchemaAndTableChannel)
 			}
 		}
 	}
-
+	go closeDbClientWhenDone(dbclient, doneChannel, numberOfTables)
 	if err := schemaTablesRows.Err(); err != nil {
 		return "", err
 	}
 	return postgresurlsha, nil
+}
+
+func addTableToDb(
+	postgresurlsha types.Sha,
+	schema types.SchemaName,
+	table types.TableName,
+	db *types.Databases,
+	dbclient *sql.DB,
+	doneChannel chan struct{},
+	doneSchemaAndTableChannel *types.DoneSchemaAndTableChannel,
+) {
+	defer func() {
+		doneChannel <- struct{}{}
+		(*doneSchemaAndTableChannel) <- [2]string{string(schema), string(table)}
+	}()
+	query := fmt.Sprintf("SELECT * FROM %s.%s", string(schema), string(table))
+	fmt.Println(query)
+	dbRows, err := dbclient.Query(query)
+	if err != nil {
+		return
+	}
+	defer dbRows.Close()
+
+	var rows []types.Row
+	var columnNames []string
+	columnNames, err = dbRows.Columns()
+	if err != nil {
+		return
+	}
+
+	for dbRows.Next() {
+		scanArgs := make([]interface{}, len(columnNames))
+		values := make([]sql.NullString, len(columnNames))
+		for i := range values {
+			scanArgs[i] = &values[i]
+		}
+		if err := dbRows.Scan(scanArgs...); err != nil {
+			return
+		}
+		row := make(types.Row)
+		for i, columnName := range columnNames {
+			if values[i].Valid {
+				// If the value is not NULL, use the string value
+				valueStr := values[i].String
+				row[types.ColumnName(columnName)] = types.Value(valueStr)
+			} else {
+				// If the value is NULL, use an empty string
+				row[types.ColumnName(columnName)] = types.Value("")
+			}
+		}
+
+		rows = append(rows, row)
+	}
+
+	(*db)[postgresurlsha][schema][table] = rows
+	fmt.Println(query + " finished")
+}
+
+func closeDbClientWhenDone(dbclient *sql.DB, channel chan struct{}, numberOfTables int) {
+
+	for i := 0; i < numberOfTables; i++ {
+		<-channel
+		fmt.Println("channel gotten!!")
+	}
+	fmt.Println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX dbclient closed XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", numberOfTables)
+	dbclient.Close()
+	//defer dbclient.Close()
 }
 
 func Addition(a int, b int) int {

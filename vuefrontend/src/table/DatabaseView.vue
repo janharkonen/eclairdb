@@ -47,7 +47,7 @@ const hash = route.params.hash as string
 const { data, isLoading, error } = useQuery({
   queryKey: ['schemasAndTables', hash],
   queryFn: async () => {
-    const response = await fetch(`/api/get-schemas-and-tables?hash=${hash}`);
+    const response = await fetch(`http://localhost:8081/get-schemas-and-tables?hash=${hash}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -78,6 +78,36 @@ const startResize = (event: MouseEvent) => {
   document.addEventListener('mouseup', handleMouseUp)
 }
 
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  console.log('onMounted')
+  const eventSource = new EventSource(`http://localhost:8081/get-schemas-and-tables-stream?hash=${hash}`)
+  
+  // Add event listener for 'complete' event to close the connection
+  console.log('adding event listener for complete')
+  eventSource.addEventListener('complete', (event) => {
+    console.log('Stream completed:', event.data)
+    eventSource.close()
+  })
+  
+  console.log('adding event listener for onmessage')
+  eventSource.onmessage = (event) => {
+    console.log(event.data)
+  }
+  
+  console.log('adding event listener for onopen')
+  eventSource.onopen = () => {
+    console.log('Connected to SSE')
+  }
+  
+  // Add error handler to close connection on error
+  console.log('adding event listener for onerror')
+  eventSource.onerror = (error) => {
+    console.error('SSE error:', error)
+    eventSource.close()
+  }
+})
 </script>
 
 <style scoped>
