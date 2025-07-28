@@ -13,7 +13,7 @@ import (
 	"github.com/janharkonen/eclairdb/types"
 )
 
-func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
+func LoadData(postgresurl string, db *types.Databases) (types.Sha, error) {
 
 	hasher := sha256.New()
 	hasher.Write([]byte(postgresurl))
@@ -25,7 +25,7 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 	}
 	mu := sync.Mutex{}
 	mu.Lock()
-	(*db)[postgresurlsha] = make(types.Schema)
+	(*db)[postgresurlsha] = make(types.Schemas)
 	mu.Unlock()
 
 	if err := dbclient.Ping(); err != nil {
@@ -69,7 +69,7 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 				numberOfTables++
 				mu.Lock()
 				if _, exists := (*db)[postgresurlsha][types.SchemaName(schemaName.String)]; !exists {
-					(*db)[postgresurlsha][types.SchemaName(schemaName.String)] = make(types.Table)
+					(*db)[postgresurlsha][types.SchemaName(schemaName.String)] = make(types.Tables)
 				}
 				(*db)[postgresurlsha][types.SchemaName(schemaName.String)][types.TableName(tableName.String)] = make([]types.Row, 0)
 				mu.Unlock()
@@ -84,7 +84,7 @@ func LoadData(postgresurl string, db *types.Database) (types.Sha, error) {
 	return postgresurlsha, nil
 }
 
-func addTableToDb(postgresurlsha types.Sha, schema types.SchemaName, table types.TableName, db *types.Database, dbclient *sql.DB, doneChannel chan struct{}) {
+func addTableToDb(postgresurlsha types.Sha, schema types.SchemaName, table types.TableName, db *types.Databases, dbclient *sql.DB, doneChannel chan struct{}) {
 	defer func() { doneChannel <- struct{}{} }()
 	query := fmt.Sprintf("SELECT * FROM %s.%s", string(schema), string(table))
 	fmt.Println(query)

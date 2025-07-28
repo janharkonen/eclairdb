@@ -11,11 +11,11 @@ import (
 	"github.com/janharkonen/eclairdb/types"
 )
 
-var db types.Database
+var db types.Databases
 
 func main() {
 	fmt.Println("Starting Go API")
-	db = make(types.Database)
+	db = make(types.Databases)
 	router := gin.Default()
 
 	router.Use(corsConfig)

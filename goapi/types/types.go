@@ -7,6 +7,6 @@ type TableName string
 
 type Value string
 type Row map[ColumnName]Value
-type Table map[TableName][]Row
-type Schema map[SchemaName]Table
-type Database map[Sha]Schema
+type Tables map[TableName][]Row
+type Schemas map[SchemaName]Tables
+type Databases map[Sha]Schemas
