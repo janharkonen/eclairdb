@@ -47,7 +47,7 @@ const hash = route.params.hash as string
 const { data, isLoading, error } = useQuery({
   queryKey: ['schemasAndTables', hash],
   queryFn: async () => {
-    const response = await fetch(`http://localhost:8081/get-schemas-and-tables?hash=${hash}`);
+    const response = await fetch(`/api/get-schemas-and-tables?hash=${hash}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -82,7 +82,7 @@ import { onMounted } from 'vue'
 
 onMounted(() => {
   console.log('onMounted')
-  const eventSource = new EventSource(`http://localhost:8081/get-schemas-and-tables-stream?hash=${hash}`)
+  const eventSource = new EventSource(`/api/get-schemas-and-tables-stream?hash=${hash}`)
   
   // Add event listener for 'complete' event to close the connection
   console.log('adding event listener for complete')
