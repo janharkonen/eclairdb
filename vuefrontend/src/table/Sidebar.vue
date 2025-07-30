@@ -1,6 +1,6 @@
 <template>
-    <div class="text-white h-full w-full sidebar bg-cyan-800  overflow-y-auto border-r-2 border-cyan-300">
-        <div v-for="schemaName in Object.keys(props.schemasAndTables)" :key="schemaName" class="mb-2">
+    <div class="text-white h-full w-full sidebar bg-cyan-800  overflow-y-auto border-r-1 border-cyan-300">
+        <div v-for="schemaName in Object.keys(schemasAndTables)" :key="schemaName" class="mb-2">
             <div 
                 class="flex items-center cursor-pointer hover:bg-cyan-700 p-2 border border-cyan-600"
                 @click="toggleSchema(schemaName)"
@@ -9,8 +9,8 @@
             </div>
             <div v-if="isSchemaOpen[schemaName]" class="ml-4 mt-1">
                 <button
-                    v-for="tableName in Object.keys(props.schemasAndTables[schemaName])" 
-                    :disabled="!props.schemasAndTables[schemaName][tableName]"
+                    v-for="tableName in Object.keys(schemasAndTables[schemaName])" 
+                    :disabled="!schemasAndTables[schemaName][tableName]"
                     :key="tableName"
                     :class="
                         (selectedTable !== tableName || selectedSchema !== schemaName ? 
@@ -22,11 +22,10 @@
                     class="
                         disabled:cursor-not-allowed
                         disabled:text-gray-400
-                        px-2 
+                        px-4
                         w-full 
                         text-left 
                         p-1 
-                        rounded 
                         cursor-pointer 
                         select-none 
                         overflow-hidden 

@@ -1,8 +1,43 @@
 <template>
-  <div class="flex flex-col justify-center items-center h-full">
-    <p>Params: {{ params }}</p>
-    <p>Data: {{ data }}</p>
-  </div>
+  <div class="w-full h-full">
+    <table class="w-full h-full">
+      <thead id="header">
+          <tr>
+            <th 
+              v-for="(column, index) in columns"
+              :key="`header-${column}`" 
+              class="border-b border-gray-200 text-left relative"
+              :style="{ width: `${columnWidths[index]}px` }"
+              >
+              {{ column }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+              v-for="row in rows"
+              :style="{ width: `${totalWidth}px`, height: `${rowHeight}px` }"
+            >
+                <td 
+                  v-for="(column, index) in columns"
+                  :style="{ 
+                    width: `${columnWidths[index]}px`, 
+                    height: `${rowHeight}px`,
+                    maxWidth: `${columnWidths[index]}px`,
+                    minWidth: `${columnWidths[index]}px`,
+                    padding: '0 4px',
+                    boxSizing: 'border-box',
+                    fontSize: '14px'
+                  }"
+                  class="truncate overflow-hidden whitespace-nowrap"
+                  :title="row[column]"
+                  >
+                  {{ row[column] }}
+                </td>
+              </tr>
+            </tbody>
+      </table>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -31,6 +66,20 @@ const { data, isLoading, error } = useQuery({
     return response.json()
   },
 })
+
+import { ref } from 'vue'
+
+const rows = computed(() => data.value)
+const columns = computed(() => Object.keys(rows.value[0]))
+const rowCount = computed(() => data.value.length);
+const rowHeight = 21;
+const headerHeight = computed(() => document.getElementById('header')?.clientHeight || 0)
+const totalHeight = computed(() => rowCount.value * rowHeight + headerHeight.value)
+const columnWidths = ref<number[]>([])
+const totalWidth = computed(() => columnWidths.value.reduce((acc, width) => acc + width, 0))
+
+
+
 
 console.log(params)
 </script>

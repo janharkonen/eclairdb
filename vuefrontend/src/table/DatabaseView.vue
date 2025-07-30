@@ -15,16 +15,37 @@
     <div class="w-1 h-full cursor-ew-resize bg-cyan-300 hover:bg-cyan-400 active:bg-cyan-500" 
       @mousedown="startResize"
     ></div>
-    <div class="flex-1 h-full">
-      <div v-if="!table || !schema" class="flex justify-center items-center h-full">
+    <div class="flex flex-col h-full w-full">
+      <div v-if="!table || !schema"> 
         <p>No table selected</p>
       </div>
-      <Table 
-        v-else
+      <div v-else class="h-full">
+        <div 
+        class="
+        text-white 
+        text-xl 
+        p-4 
+        h-12 
+        gap-2 
+        flex 
+        items-center 
+        justify-left 
+        border-b 
+        border-cyan-600
+        bg-cyan-900
+        " 
+        >
+          <span class="mr-2 text-gray-500">Schema: </span>
+          <span class="text-gray-300">{{ schema }}</span>
+          <span class="mr-2 text-gray-500">, Table: </span>
+          <span class="text-cyan-300">{{ table }}</span>
+        </div>
+        <Table 
         :shownTable="table" 
         :shownSchema="schema" 
         :hash="hash"
-      />
+        />
+      </div>
       <!-- Content area will go here -->
     </div>
   </div>
