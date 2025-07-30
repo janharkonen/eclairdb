@@ -8,7 +8,7 @@
       >
       <Sidebar 
         class="flex-grow" 
-        :data="data" 
+        :schemasAndTables="schemasAndTablesLoading" 
         v-model:selectedTable="table" 
         v-model:selectedSchema="schema" />
     </div>
@@ -38,7 +38,8 @@ import Table from './Table.vue'
 import { ref } from 'vue'
 
 
-const sidebarWidth = ref(180)
+const sidebarWidth = ref(240)
+const schemasAndTablesLoading = ref<Record<string, Record<string, boolean>>>({})
 const table = ref<string>('')
 const schema = ref<string>('')
 const route = useRoute()
@@ -53,9 +54,13 @@ const { data, isLoading, error } = useQuery({
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
     
-    return response.json();
+    const data = await response.json();
+    schemasAndTablesLoading.value = data;
+    return data;
   },
 })
+
+schemasAndTablesLoading.value = data.value
 
 const sidebarContainer = ref<HTMLElement | null>(null)
 
@@ -79,31 +84,30 @@ const startResize = (event: MouseEvent) => {
 }
 
 import { onMounted } from 'vue'
-
 onMounted(() => {
-  console.log('onMounted')
   const eventSource = new EventSource(`/api/get-schemas-and-tables-stream?hash=${hash}`)
   
-  // Add event listener for 'complete' event to close the connection
-  console.log('adding event listener for complete')
-  eventSource.addEventListener('complete', (event) => {
-    console.log('Stream completed:', event.data)
-    eventSource.close()
+  eventSource.addEventListener('table_ready', (event: MessageEvent) => {
+    const [schema, table] = event.data.split(':')
+    schemasAndTablesLoading.value[schema][table] = true
   })
-  
-  console.log('adding event listener for onmessage')
-  eventSource.onmessage = (event) => {
-    console.log(event.data)
-  }
-  
-  console.log('adding event listener for onopen')
+
+  eventSource.addEventListener('complete', () => { 
+    console.log('complete')
+    for (const schema in schemasAndTablesLoading.value) {
+      for (const table in schemasAndTablesLoading.value[schema]) {
+        schemasAndTablesLoading.value[schema][table] = true
+      }
+    }
+    eventSource.close() 
+  })
+
   eventSource.onopen = () => {
     console.log('Connected to SSE')
-  }
-  
-  // Add error handler to close connection on error
-  console.log('adding event listener for onerror')
-  eventSource.onerror = (error) => {
+}
+
+// Add error handler to close connection on error
+eventSource.onerror = (error) => {
     console.error('SSE error:', error)
     eventSource.close()
   }

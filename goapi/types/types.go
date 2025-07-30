@@ -7,7 +7,12 @@ type TableName string
 
 type Value string
 type Row map[ColumnName]Value
-type Tables map[TableName][]Row
+type Rows []Row
+type Table struct {
+	Done bool
+	Rows Rows
+}
+type Tables map[TableName]Table
 type Schemas map[SchemaName]Tables
 type Databases map[Sha]Schemas
 
