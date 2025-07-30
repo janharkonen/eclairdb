@@ -103,7 +103,6 @@ func getSchemasAndTablesStream(ginctx *gin.Context) {
 		return
 	}
 
-	var seconds int = 1
 	clientGone := ginctx.Writer.CloseNotify()
 	for {
 		ready := true
@@ -113,7 +112,7 @@ func getSchemasAndTablesStream(ginctx *gin.Context) {
 			return
 		default:
 			schemasAndTables := db[types.Sha(hash)]
-			time.Sleep(time.Duration(seconds) * time.Second)
+			time.Sleep(time.Duration(1000) * time.Millisecond)
 			for schemaname, schema := range schemasAndTables {
 				for tablename := range schema {
 					if schema[tablename].Done {
