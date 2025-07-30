@@ -1,24 +1,27 @@
 <template>
-    <div class="text-white h-full w-full sidebar bg-cyan-800 p-4  overflow-y-auto border-r-2 border-cyan-300">
+    <div class="text-white h-full w-full sidebar bg-cyan-800  overflow-y-auto border-r-2 border-cyan-300">
         <div v-for="schemaName in Object.keys(props.schemasAndTables)" :key="schemaName" class="mb-2">
             <div 
-                class="flex items-center cursor-pointer hover:bg-cyan-700 p-1 rounded border border-cyan-600"
+                class="flex items-center cursor-pointer hover:bg-cyan-700 p-2 border border-cyan-600"
                 @click="toggleSchema(schemaName)"
             >
                 <span class="mr-2 select-none overflow-hidden text-ellipsis whitespace-nowrap">{{ isSchemaOpen[schemaName] ? `▼ ${schemaName}` : `► ${schemaName}` }}</span>
             </div>
             <div v-if="isSchemaOpen[schemaName]" class="ml-4 mt-1">
-                <button 
+                <button
                     v-for="tableName in Object.keys(props.schemasAndTables[schemaName])" 
+                    :disabled="!props.schemasAndTables[schemaName][tableName]"
                     :key="tableName"
                     :class="
                         (selectedTable !== tableName || selectedSchema !== schemaName ? 
                         'text-cyan-300 bg-cyan-800 hover:bg-cyan-900' 
                         : 
-                        'text-cyan-900 bg-cyan-400 hover:bg-cyan-100'
+                        'text-cyan-900 bg-cyan-400 hover:bg-cyan-100 disabled:bg-cyan-400 disabled:text-cyan-900'
                         )
                     "
                     class="
+                        disabled:cursor-not-allowed
+                        disabled:text-gray-400
                         px-2 
                         w-full 
                         text-left 
