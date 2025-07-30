@@ -16,15 +16,12 @@ import (
 func LoadData(
 	postgresurl string,
 	db *types.Databases,
-	doneSchemaAndTableChannelMap *types.DoneSchemaAndTableChannelMap,
 ) (types.Sha, error) {
 
 	hasher := sha256.New()
 	hasher.Write([]byte(postgresurl))
 	postgresurlsha := types.Sha(base64.URLEncoding.EncodeToString(hasher.Sum(nil)))
 
-	doneSchemaAndTableChannel := make(types.DoneSchemaAndTableChannel)
-	(*doneSchemaAndTableChannelMap)[postgresurlsha] = doneSchemaAndTableChannel
 	dbclient, err := sql.Open("postgres", postgresurl)
 	if err != nil {
 		return "", err
@@ -77,9 +74,9 @@ func LoadData(
 				if _, exists := (*db)[postgresurlsha][types.SchemaName(schemaName.String)]; !exists {
 					(*db)[postgresurlsha][types.SchemaName(schemaName.String)] = make(types.Tables)
 				}
-				(*db)[postgresurlsha][types.SchemaName(schemaName.String)][types.TableName(tableName.String)] = make([]types.Row, 0)
+				(*db)[postgresurlsha][types.SchemaName(schemaName.String)][types.TableName(tableName.String)] = types.Table{Done: false, Rows: make([]types.Row, 0)}
 				mu.Unlock()
-				go addTableToDb(postgresurlsha, types.SchemaName(schemaName.String), types.TableName(tableName.String), db, dbclient, doneChannel, &doneSchemaAndTableChannel)
+				go addTableToDb(postgresurlsha, types.SchemaName(schemaName.String), types.TableName(tableName.String), db, dbclient, doneChannel)
 			}
 		}
 	}
@@ -97,14 +94,11 @@ func addTableToDb(
 	db *types.Databases,
 	dbclient *sql.DB,
 	doneChannel chan struct{},
-	doneSchemaAndTableChannel *types.DoneSchemaAndTableChannel,
 ) {
 	defer func() {
 		doneChannel <- struct{}{}
-		(*doneSchemaAndTableChannel) <- [2]string{string(schema), string(table)}
 	}()
 	query := fmt.Sprintf("SELECT * FROM %s.%s", string(schema), string(table))
-	fmt.Println(query)
 	dbRows, err := dbclient.Query(query)
 	if err != nil {
 		return
@@ -142,19 +136,14 @@ func addTableToDb(
 		rows = append(rows, row)
 	}
 
-	(*db)[postgresurlsha][schema][table] = rows
-	fmt.Println(query + " finished")
+	(*db)[postgresurlsha][schema][table] = types.Table{Done: true, Rows: rows}
 }
 
 func closeDbClientWhenDone(dbclient *sql.DB, channel chan struct{}, numberOfTables int) {
-
 	for i := 0; i < numberOfTables; i++ {
 		<-channel
-		fmt.Println("channel gotten!!")
 	}
-	fmt.Println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX dbclient closed XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", numberOfTables)
 	dbclient.Close()
-	//defer dbclient.Close()
 }
 
 func Addition(a int, b int) int {

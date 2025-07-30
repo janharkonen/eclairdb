@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/janharkonen/eclairdb/postgresloader"
@@ -12,12 +13,10 @@ import (
 )
 
 var db types.Databases
-var doneSchemaAndTableChannelMap types.DoneSchemaAndTableChannelMap
 
 func main() {
 	fmt.Println("Starting Go API")
 	db = make(types.Databases)
-	doneSchemaAndTableChannelMap = make(types.DoneSchemaAndTableChannelMap)
 	router := gin.Default()
 
 	router.Use(corsConfig)
@@ -56,7 +55,7 @@ func connectPostgres(ginctx *gin.Context) {
 	}
 
 	postgresurl := requestBody.URI
-	postgresurlsha, err := postgresloader.LoadData(postgresurl, &db, &doneSchemaAndTableChannelMap)
+	postgresurlsha, err := postgresloader.LoadData(postgresurl, &db)
 	if err != nil {
 		ginctx.JSON(http.StatusInternalServerError, gin.H{"error": "GIN ERROR: " + err.Error()})
 		return
@@ -71,13 +70,14 @@ func getSchemasAndTables(ginctx *gin.Context) {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Missing hash parameter"})
 		return
 	}
-	schemaTableMap := make(map[string]map[string]struct{})
+	schemaTableMap := make(map[string]map[string]bool)
 
 	if dbData, ok := db[types.Sha(hash)]; ok {
 		for schemaName, tables := range dbData {
-			schemaTableMap[string(schemaName)] = make(map[string]struct{})
+			schemaTableMap[string(schemaName)] = make(map[string]bool)
 			for tableName := range tables {
-				schemaTableMap[string(schemaName)][string(tableName)] = struct{}{}
+				tableIsDone := db[types.Sha(hash)][types.SchemaName(schemaName)][types.TableName(tableName)].Done
+				schemaTableMap[string(schemaName)][string(tableName)] = tableIsDone
 			}
 		}
 		ginctx.JSON(http.StatusOK, schemaTableMap)
@@ -103,12 +103,34 @@ func getSchemasAndTablesStream(ginctx *gin.Context) {
 		return
 	}
 
-	channel := doneSchemaAndTableChannelMap[types.Sha(hash)]
+	var seconds int = 1
+	clientGone := ginctx.Writer.CloseNotify()
 	for {
-		fmt.Println("data123123")
-		data := <-channel
-		fmt.Println(data)
+		ready := true
+		select {
+		case <-clientGone:
+			fmt.Println("Client disconnected, stopping SSE stream")
+			return
+		default:
+			schemasAndTables := db[types.Sha(hash)]
+			time.Sleep(time.Duration(seconds) * time.Second)
+			for schemaname, schema := range schemasAndTables {
+				for tablename := range schema {
+					if schema[tablename].Done {
+						ginctx.SSEvent("table_ready", fmt.Sprintf("%s:%s", schemaname, tablename))
+						ginctx.Writer.Flush()
+					} else {
+						ready = false
+					}
+				}
+			}
+		}
+		if ready {
+			break
+		}
 	}
+	ginctx.SSEvent("complete", "complete")
+	ginctx.Writer.Flush()
 }
 
 func getFilteredPaginatedProducts(ginctx *gin.Context) {
@@ -133,12 +155,12 @@ func getFilteredPaginatedProducts(ginctx *gin.Context) {
 	fmt.Println(table)
 
 	tableData := db[types.Sha(hash)][types.SchemaName(schema)][types.TableName(table)]
-	if tableData == nil {
+	if !tableData.Done {
 		fmt.Println("Table not found")
 		return
 	}
 
-	var filteredRows = getFilteredPaginatedRows(tableData, filterParams, indexStart, indexEnd)
+	var filteredRows = getFilteredPaginatedRows(tableData.Rows, filterParams, indexStart, indexEnd)
 
 	ginctx.JSON(http.StatusOK, filteredRows)
 }

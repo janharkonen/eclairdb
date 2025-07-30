@@ -1,6 +1,6 @@
 <template>
     <div class="text-white h-full w-full sidebar bg-cyan-800 p-4  overflow-y-auto border-r-2 border-cyan-300">
-        <div v-for="schemaName in Object.keys(props.data)" :key="schemaName" class="mb-2">
+        <div v-for="schemaName in Object.keys(props.schemasAndTables)" :key="schemaName" class="mb-2">
             <div 
                 class="flex items-center cursor-pointer hover:bg-cyan-700 p-1 rounded border border-cyan-600"
                 @click="toggleSchema(schemaName)"
@@ -9,13 +9,14 @@
             </div>
             <div v-if="isSchemaOpen[schemaName]" class="ml-4 mt-1">
                 <button 
-                    v-for="tableName in Object.keys(props.data[schemaName])" 
+                    v-for="tableName in Object.keys(props.schemasAndTables[schemaName])" 
                     :key="tableName"
                     :class="
-                        selectedTable !== tableName || selectedSchema !== schemaName ? 
+                        (selectedTable !== tableName || selectedSchema !== schemaName ? 
                         'text-cyan-300 bg-cyan-800 hover:bg-cyan-900' 
                         : 
                         'text-cyan-900 bg-cyan-400 hover:bg-cyan-100'
+                        )
                     "
                     class="
                         px-2 
@@ -28,10 +29,15 @@
                         overflow-hidden 
                         text-ellipsis 
                         whitespace-nowrap
-                        "
+                    "
                     @click="selectTable(schemaName, tableName)"
                 >
-                    {{ tableName }}
+                <div class="flex items-center justify-left gap-2">
+                    <span v-if="!schemasAndTables[schemaName][tableName]">
+                        <Loader2 class="animate-spin mr-2 h-4 w-4" />
+                    </span>
+                    <span>{{ tableName }}</span>
+                </div>
                 </button>
             </div>
         </div>
@@ -40,9 +46,9 @@
 
 <script setup lang="ts">
 import { defineProps, ref } from 'vue'
-
+import { Loader2 } from 'lucide-vue-next'
 const props = defineProps<{
-    data: Record<string, Record<string, string[]>>,
+    schemasAndTables: Record<string, Record<string, boolean>>,
 }>()
 
 const isSchemaOpen = ref<Record<string, boolean>>({})
