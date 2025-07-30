@@ -82,10 +82,10 @@ const startResize = (event: MouseEvent) => {
   document.addEventListener('mousemove', handleMouseMove)
   document.addEventListener('mouseup', handleMouseUp)
 }
+const eventSource = new EventSource(`/api/get-schemas-and-tables-stream?hash=${hash}`)
 
 import { onMounted } from 'vue'
 onMounted(() => {
-  const eventSource = new EventSource(`/api/get-schemas-and-tables-stream?hash=${hash}`)
   
   eventSource.addEventListener('table_ready', (event: MessageEvent) => {
     const [schema, table] = event.data.split(':')
@@ -111,7 +111,16 @@ eventSource.onerror = (error) => {
     console.error('SSE error:', error)
     eventSource.close()
   }
+
 })
+
+window.addEventListener('beforeunload', () => {
+  if (eventSource) {
+    console.log('Closing EventSource before page refresh')
+    eventSource.close()
+  }
+})
+
 </script>
 
 <style scoped>

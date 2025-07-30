@@ -76,7 +76,8 @@ func getSchemasAndTables(ginctx *gin.Context) {
 		for schemaName, tables := range dbData {
 			schemaTableMap[string(schemaName)] = make(map[string]bool)
 			for tableName := range tables {
-				schemaTableMap[string(schemaName)][string(tableName)] = false
+				tableIsDone := db[types.Sha(hash)][types.SchemaName(schemaName)][types.TableName(tableName)].Done
+				schemaTableMap[string(schemaName)][string(tableName)] = tableIsDone
 			}
 		}
 		ginctx.JSON(http.StatusOK, schemaTableMap)
@@ -103,17 +104,24 @@ func getSchemasAndTablesStream(ginctx *gin.Context) {
 	}
 
 	var seconds int = 1
+	clientGone := ginctx.Writer.CloseNotify()
 	for {
 		ready := true
-		schemasAndTables := db[types.Sha(hash)]
-		time.Sleep(time.Duration(seconds) * time.Second)
-		for schemaname, schema := range schemasAndTables {
-			for tablename := range schema {
-				if schema[tablename].Done {
-					ginctx.SSEvent("table_ready", fmt.Sprintf("%s:%s", schemaname, tablename))
-					ginctx.Writer.Flush()
-				} else {
-					ready = false
+		select {
+		case <-clientGone:
+			fmt.Println("Client disconnected, stopping SSE stream")
+			return
+		default:
+			schemasAndTables := db[types.Sha(hash)]
+			time.Sleep(time.Duration(seconds) * time.Second)
+			for schemaname, schema := range schemasAndTables {
+				for tablename := range schema {
+					if schema[tablename].Done {
+						ginctx.SSEvent("table_ready", fmt.Sprintf("%s:%s", schemaname, tablename))
+						ginctx.Writer.Flush()
+					} else {
+						ready = false
+					}
 				}
 			}
 		}
