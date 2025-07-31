@@ -1,7 +1,17 @@
 <template>
   <div class="w-full h-full">
-    <table class="w-full h-full">
-      <thead id="header">
+          <p class="whitespace-nowrap">
+            <span class="inline-block">
+              Your table content will go here
+              Your table content will go here
+              Your table content will go here
+              Your table content will go here
+              Your table content will go here
+            </span>
+          </p>
+    <!--
+      <table class="w-full">
+        <thead id="header" class="sticky top-0 bg-white z-10">
           <tr>
             <th 
               v-for="(column, index) in columns"
@@ -12,35 +22,37 @@
               {{ column }}
             </th>
           </tr>
-        </thead>
-        <tbody>
-          <tr 
-              v-for="row in rows"
-              :style="{ width: `${totalWidth}px`, height: `${rowHeight}px` }"
-            >
-                <td 
-                  v-for="(column, index) in columns"
-                  :style="{ 
-                    width: `${columnWidths[index]}px`, 
-                    height: `${rowHeight}px`,
-                    maxWidth: `${columnWidths[index]}px`,
-                    minWidth: `${columnWidths[index]}px`,
-                    padding: '0 4px',
-                    boxSizing: 'border-box',
-                    fontSize: '14px'
-                  }"
-                  class="truncate overflow-hidden whitespace-nowrap"
-                  :title="row[column]"
-                  >
-                  {{ row[column] }}
-                </td>
-              </tr>
-            </tbody>
-      </table>
-    </div>
+      </thead>
+      <tbody>
+        <tr 
+            v-for="row in rows"
+            :style="{ width: `${totalWidth}px`, height: `${rowHeight}px` }"
+          >
+          <td 
+                v-for="(column, index) in columns"
+                :style="{ 
+                  width: `${columnWidths[index]}px`, 
+                  height: `${rowHeight}px`,
+                  maxWidth: `${columnWidths[index]}px`,
+                  minWidth: `${columnWidths[index]}px`,
+                  padding: '0 4px',
+                  boxSizing: 'border-box',
+                  fontSize: '14px'
+                }"
+                class="truncate overflow-hidden whitespace-nowrap"
+                :title="row[column]"
+                >
+                {{ row[column] }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        -->
+      </div>
 </template>
 
 <script setup lang="ts">
+
 import { useQuery } from '@tanstack/vue-query'
 import { computed } from 'vue'
 
@@ -52,7 +64,7 @@ const { shownTable, shownSchema, hash } = defineProps<{
 
 const params = computed(() => {
   const params_base = `hash=${hash}&schema=${shownSchema}&table=${shownTable}`
-  const params_indexes = `&--indexes=0-10`
+  const params_indexes = `&--indexes=1-50`
   return params_base + params_indexes
 })
 

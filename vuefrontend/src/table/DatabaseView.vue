@@ -19,20 +19,20 @@
       <div v-if="!table || !schema" class="h-full w-full flex items-center justify-center"> 
         <p>No table selected</p>
       </div>
-      <div v-else class="h-full">
+      <div v-else class="h-full flex flex-col">
         <div 
-        class="
-        text-white 
-        text-xl 
-        p-4 
-        h-12 
-        gap-2 
-        flex 
-        items-center 
-        justify-left 
-        border-b 
-        border-cyan-600
-        bg-cyan-900
+          class="
+          text-white 
+          text-xl 
+          p-4 
+          h-10
+          gap-2 
+          flex 
+          items-center 
+          justify-left 
+          border-b 
+          border-cyan-600
+          bg-cyan-900
         " 
         >
           <span class="mr-2 text-gray-500">Schema: </span>
@@ -40,18 +40,29 @@
           <span class="mr-2 text-gray-500">, Table: </span>
           <span class="text-cyan-300">{{ table }}</span>
         </div>
-        <Table 
-        :shownTable="table" 
-        :shownSchema="schema" 
-        :hash="hash"
-        />
+        <ScrollAreaRoot class="w-full h-full overflow-auto">
+          <ScrollAreaViewport class="w-full h-full">
+              <Table 
+              :shownTable="table" 
+              :shownSchema="schema" 
+              :hash="hash"
+              />
+          </ScrollAreaViewport>
+          <ScrollAreaScrollbar orientation="horizontal" class="flex touch-none select-none p-0.5 bg-gray-100 transition-colors duration-150 ease-out hover:bg-gray-200 data-[orientation=horizontal]:h-2.5 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col">
+            <ScrollAreaThumb class="flex-1 bg-gray-400 rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
+          </ScrollAreaScrollbar>
+          <ScrollAreaScrollbar orientation="vertical" class="flex touch-none select-none p-0.5 bg-gray-100 transition-colors duration-150 ease-out hover:bg-gray-200 data-[orientation=horizontal]:h-2.5 data-[orientation=vertical]:w-2.5 data-[orientation=vertical]:flex-col">
+            <ScrollAreaThumb class="flex-1 bg-gray-400 rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
+          </ScrollAreaScrollbar>
+          <ScrollAreaCorner class="bg-gray-200" />
+        </ScrollAreaRoot>
       </div>
-      <!-- Content area will go here -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport } from 'radix-vue'
 import { useRoute } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import Sidebar from './Sidebar.vue'
