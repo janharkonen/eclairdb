@@ -16,7 +16,7 @@
       @mousedown="startResize"
     ></div>
     <div class="flex flex-col h-full w-full">
-      <div v-if="!table || !schema"> 
+      <div v-if="!table || !schema" class="h-full w-full flex items-center justify-center"> 
         <p>No table selected</p>
       </div>
       <div v-else class="h-full">
