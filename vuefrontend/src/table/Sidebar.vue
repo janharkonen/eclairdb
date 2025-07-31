@@ -1,5 +1,15 @@
 <template>
     <div class="text-white h-full w-full sidebar bg-cyan-800  overflow-y-auto border-r-1 border-cyan-300">
+        <div class="flex flex-row items-center justify-left p-2 overflow-x-clip">
+            <img 
+                src="https://picapi.janharkonen.fi/api/pics/0f06489655624b13ba634f6d4bdff5e2.png" 
+                class="max-h-10 aspect-ratio invert" 
+            />
+            <img 
+                src="https://picapi.janharkonen.fi/api/pics/7b99c61a71c741c3a51896123e8069db.png?BGt=40&BGb=65&BGw=75" 
+                class="max-h-10 aspect-ratio invert" 
+            />
+        </div>
         <div v-for="schemaName in Object.keys(schemasAndTables)" :key="schemaName" class="mb-2">
             <div 
                 class="flex items-center cursor-pointer hover:bg-cyan-700 p-2 border border-cyan-600"
@@ -38,7 +48,7 @@
                     <span v-if="!schemasAndTables[schemaName][tableName]">
                         <Loader2 class="animate-spin mr-2 h-4 w-4" />
                     </span>
-                    <span>{{ tableName }}</span>
+                    <span class="truncate overflow-hidden whitespace-nowrap">{{ tableName }}</span>
                 </div>
                 </button>
             </div>
