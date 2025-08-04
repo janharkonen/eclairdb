@@ -20,6 +20,7 @@
         <p>No table selected</p>
       </div>
       <div v-else class="h-full flex flex-col">
+        <!--Upper header with Schema and Table name-->
         <div 
           class="
           text-white 
@@ -40,29 +41,17 @@
           <span class="mr-2 text-gray-500">, Table: </span>
           <span class="text-cyan-300">{{ table }}</span>
         </div>
-        <ScrollAreaRoot class="w-full h-full overflow-auto">
-          <ScrollAreaViewport class="w-full h-full">
-              <Table 
-              :shownTable="table" 
-              :shownSchema="schema" 
-              :hash="hash"
-              />
-          </ScrollAreaViewport>
-          <ScrollAreaScrollbar orientation="horizontal" class="flex touch-none select-none p-0.5 bg-gray-100 transition-colors duration-150 ease-out hover:bg-gray-200 data-[orientation=horizontal]:h-2.5 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col">
-            <ScrollAreaThumb class="flex-1 bg-gray-400 rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
-          </ScrollAreaScrollbar>
-          <ScrollAreaScrollbar orientation="vertical" class="flex touch-none select-none p-0.5 bg-gray-100 transition-colors duration-150 ease-out hover:bg-gray-200 data-[orientation=horizontal]:h-2.5 data-[orientation=vertical]:w-2.5 data-[orientation=vertical]:flex-col">
-            <ScrollAreaThumb class="flex-1 bg-gray-400 rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
-          </ScrollAreaScrollbar>
-          <ScrollAreaCorner class="bg-gray-200" />
-        </ScrollAreaRoot>
+        <Table 
+        :shownTable="table" 
+        :shownSchema="schema" 
+        :hash="hash"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport, ScrollAreaCorner } from 'radix-vue'
 import { useRoute } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import Sidebar from './Sidebar.vue'
