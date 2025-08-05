@@ -29,7 +29,7 @@
       <DatabaseInput
         img-src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg"
         service="PostgreSQL"
-        placeholder="postgres://user_name:pass_word@host-IP:port/database-name?sslmode=disable"
+        placeholder="postgres://user_name:pass_word@host-IP:port/database-name?sslmode=require&channel_binding=require"
         apiroute="connect-postgres"
       />
       <!--

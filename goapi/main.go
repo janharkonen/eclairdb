@@ -144,6 +144,8 @@ func getFilteredPaginatedProducts(ginctx *gin.Context) {
 	var indexEnd int
 	var err error
 	indexStart, indexEnd, err = parseIndexes(queryParams)
+	fmt.Println("indexStart", indexStart)
+	fmt.Println("indexEnd", indexEnd)
 	if err != nil {
 		ginctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -192,8 +194,8 @@ func parseIndexes(queryParams map[string][]string) (int, int, error) {
 func getFilteredPaginatedRows(tableData []types.Row, filterParams map[string]string, indexStart int, indexEnd int) []types.Row {
 	filteredRows := make([]types.Row, 0)
 	lastIndex := min(indexEnd, len(tableData))
-	for i := indexStart; i < lastIndex; i++ {
-		filteredRows = append(filteredRows, tableData[i])
+	for i := indexStart; i <= lastIndex; i++ {
+		filteredRows = append(filteredRows, tableData[i-1])
 	}
 	//for _, row := range tableData {
 	//	if row[types.ColumnName(filterParams["id"])] == types.Value(filterParams["id"]) {
