@@ -2,12 +2,11 @@
   <div v-if="isLoading">Loading...</div>
   <div v-else-if="error">Error: {{ error.message }}</div>
   <div v-else class="h-full flex flex-row w-full">
-    <div class="h-full flex"
+    <div class="h-full flex flex-none"
       ref="sidebarContainer"
       :style="{ width: sidebarWidth + 'px' }"
       >
       <Sidebar 
-        class="flex-grow" 
         :schemasAndTables="schemasAndTablesLoading" 
         v-model:selectedTable="table" 
         v-model:selectedSchema="schema" />
@@ -87,12 +86,12 @@ const sidebarContainer = ref<HTMLElement | null>(null)
 
 const startResize = (event: MouseEvent) => {
   const startX = event.clientX
-  const startWidth = sidebarContainer.value?.clientWidth ?? 0;
+  const startWidth = sidebarWidth.value
 
   const handleMouseMove = (moveEvent: MouseEvent) => {
-    const currentX = moveEvent.clientX
-    const currentWidth = (startWidth ?? 0) + (currentX - startX)
-    sidebarWidth.value = Math.max(currentWidth, 120)
+    const deltaX = moveEvent.clientX - startX
+    const newWidth = startWidth + deltaX
+    sidebarWidth.value = Math.max(newWidth, 10) // Minimum width of 100px
   }
 
   const handleMouseUp = () => {

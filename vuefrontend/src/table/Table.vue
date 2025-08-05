@@ -1,22 +1,24 @@
 <template>
-  <div v-if="error">
+  <div v-if="isLoading">
+    Loading...
+  </div>
+  <div v-else-if="isFetching">
+    Fetching...
+  </div>
+  <div v-else-if="error">
     Error:
   </div>
-  <div v-else-if="data" class="flex flex-col h-full">
-  
+  <div v-else-if="data && data.length > 0" class="flex flex-col h-full">
     <ScrollAreaRoot class="w-full h-full overflow-auto">
       <ScrollAreaViewport class="w-full h-full">
         <table :style="{ tableLayout: 'fixed' }">
           <thead id="header" class="sticky top-0 bg-white z-10">
             <tr>
               <th 
-              v-for="(column, index) in columns"
+              v-for="(column, index) in Object.keys(data[0])"
               :key="`header-${column}`" 
               :style="{ 
-                height: `${rowHeight}px`, 
-                width: `${columnWidths[index]}px`,
-                maxWidth: `${columnWidths[index]}px`,
-                minWidth: `${columnWidths[index]}px`
+                height: `${headerHeight}px`, 
               }"
               class="border-b border-green-200 text-left relative"
               >
@@ -28,7 +30,9 @@
                   hover:w-1 
                   cursor-col-resize 
                   bg-cyan-300 
-                  hover:bg-cyan-400"
+                  hover:bg-cyan-400
+                  h-full
+                  "
                   :style="{ height: `${totalHeight}px`}"
                   @mousedown="(e) => startResize(index, e)"
 
@@ -41,21 +45,27 @@
           </thead>
           <tbody>
             <tr 
-            v-for="row in rows"
-            :style="{ height: `${rowHeight}px` }"
+            v-for="row in data"
+            :style="{ 
+              height: `${rowHeight}px`,
+              maxHeight: `${rowHeight}px`,
+              minHeight: `${rowHeight}px`,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              lineHeight: `${rowHeight}px`
+            }"
             class="bg-cyan-200 hover:bg-cyan-300"
             >
               <td 
-                v-for="(column, index) in columns"
-                class="truncate overflow-hidden whitespace-nowrap cursor-pointer border-b border-cyan-400"
+                v-for="(column, index) in Object.keys(data[0])"
+                class="overflow-hidden whitespace-nowrap cursor-pointer border-b border-cyan-400"
                 :style="{ 
-                  height: `${rowHeight}px`,
                   padding: '0 4px',
                   boxSizing: 'border-box',
                   fontSize: '14px',
                   width: `${columnWidths[index]}px`,
                   maxWidth: `${columnWidths[index]}px`,
-                  minWidth: `${columnWidths[index]}px`
+                  minWidth: `${columnWidths[index]}px`,
                 }"
                 :title="row[column]"
               >
@@ -148,7 +158,7 @@ const params = computed(() => {
   return params_base + params_indexes
 })
 
-const { data, isLoading, error } = useQuery({
+const { data, isLoading, error, isFetching } = useQuery({
   queryKey: ['table', params],
   queryFn: async () => {
     const response = await fetch(`/api/filtered_paginated_products?${params.value}`)
@@ -160,17 +170,15 @@ const { data, isLoading, error } = useQuery({
 })
 
 import { reactive, watch } from 'vue'
-const rows = reactive(data) 
 
 const columns = computed(() => {
-  if (!rows.value || rows.value.length === 0) return []
-  return Object.keys(rows.value[0])
+  if (!data.value || data.value.length === 0) return []
+  return Object.keys(data.value[0])
 })
-const columnCount = computed(() => columns.value.length)
 const rowCount = computed(() => data.value?.length || 0);
-const rowHeight = 22;
-const headerHeight = computed(() => document.getElementById('header')?.clientHeight || 0)
-const totalHeight = computed(() => rowCount.value * rowHeight + headerHeight.value)
+const rowHeight = 20;
+const headerHeight = 60;
+const totalHeight = computed(() => rowCount.value * rowHeight + headerHeight)
 
 const columnWidths = reactive<number[]>([150])
 const totalWidth = reactive({ value: 150 })
@@ -178,24 +186,26 @@ const totalWidth = reactive({ value: 150 })
 
 
 
-watch(rows, (newData) => {
+watch(data, (newData) => {
   console.log("columnWidths: ", columnWidths)
   console.log("totalWidth", totalWidth.value)
-  console.log("rows", rows.value)
   console.log("columns", columns.value)
   console.log("newData", newData)
 })
 
-watch(columns, (newColumns) => {
+watch(data, (newColumns) => {
+  if (!data.value || data.value.length === 0) return
+  const columns = Object.keys(newColumns[0])
+  const columnCount = columns.length
   console.log("old columnWidths", columnWidths)
-  console.log("columnCount", columnCount.value)
-  if (columnWidths.length > columnCount.value) {
-    columnWidths.splice(0, columnWidths.length, ...columnWidths.slice(0, columnCount.value))
+  console.log("columnCount", columnCount)
+  if (columnWidths.length > columnCount) {
+    columnWidths.splice(0, columnWidths.length, ...columnWidths.slice(0, columnCount))
   } else {
-    columnWidths.push(...Array(columnCount.value - columnWidths.length).fill(150))
+    columnWidths.push(...Array(columnCount - columnWidths.length).fill(150))
     console.log("columnWidths", columnWidths)
   }
-  console.log("columnCount", columnCount.value)
+  console.log("columnCount", columnCount)
   totalWidth.value = columnWidths.reduce((acc, width) => acc + width, 0)
   console.log("new columnWidths", columnWidths)
 })
@@ -212,7 +222,7 @@ const startResize = (index: number, e: MouseEvent) => {
 
     // Update the reactive array
     columnWidths[index] = newWidth
-    totalWidth.value = columnWidths.reduce((acc, width) => acc + width, 0)
+    totalWidth.value = totalWidth.value + deltaX
   }
 
   const handleMouseUp = () => {
