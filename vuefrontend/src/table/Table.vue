@@ -58,7 +58,7 @@
             >
               <td 
                 v-for="(column, index) in Object.keys(data[0])"
-                class="overflow-hidden whitespace-nowrap cursor-pointer border-b border-cyan-400"
+                class="overflow-hidden truncate whitespace-nowrap cursor-pointer border-b border-cyan-400"
                 :style="{ 
                   padding: '0 4px',
                   boxSizing: 'border-box',
@@ -178,7 +178,7 @@ const columns = computed(() => {
 const rowCount = computed(() => data.value?.length || 0);
 const rowHeight = 20;
 const headerHeight = 60;
-const totalHeight = computed(() => rowCount.value * rowHeight + headerHeight)
+const totalHeight = computed(() => rowCount.value * (rowHeight + 1) + headerHeight)
 
 const columnWidths = reactive<number[]>([150])
 const totalWidth = reactive({ value: 150 })
