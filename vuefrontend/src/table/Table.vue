@@ -27,6 +27,7 @@
                 <input :list="`${column}-options`" 
                 :id="`${column}-input`" 
                 class="w-full h-full border-2  border-cyan-200 rounded-md" 
+                :value="filterValues.get(column) || ''"
                 @input="(e: Event) => filterValues.set(column, (e.target as HTMLInputElement).value)"
                 />
                 <datalist :id="`${column}-options`">
@@ -171,6 +172,7 @@ const { data, isLoading, error, isFetching } = useQuery({
     }
     return response.json()
   },
+  placeholderData: (previousData) => previousData,
 })
 
 
@@ -197,9 +199,9 @@ watch(data, (newData) => {
   console.log("newData", newData)
 })
 
-watch(data, (newColumns) => {
+watch(data, (newData) => {
   if (!data.value || data.value.length === 0) return
-  const columns = Object.keys(newColumns[0])
+  const columns = Object.keys(newData[0])
   const columnCount = columns.length
   if (columnWidths.length > columnCount) {
     columnWidths.splice(0, columnWidths.length, ...columnWidths.slice(0, columnCount))
@@ -207,10 +209,19 @@ watch(data, (newColumns) => {
     columnWidths.push(...Array(columnCount - columnWidths.length).fill(150))
   }
   totalWidth.value = columnWidths.reduce((acc, width) => acc + width, 0)
-  filterValues.clear()
-  columns.forEach((column: string) => {
-    filterValues.set(column, "")
-  })
+  
+  // Only initialize filter values if they don't exist for the current columns
+  const currentFilterKeys = Array.from(filterValues.keys())
+  const newColumns = Object.keys(newData[0])
+  
+  // Only clear and reinitialize if the columns have actually changed
+  if (currentFilterKeys.length !== newColumns.length || 
+      !newColumns.every((col: string) => currentFilterKeys.includes(col))) {
+    filterValues.clear()
+    newColumns.forEach((column: string) => {
+      filterValues.set(column, "")
+    })
+  }
 })
 //console.log("data", data.value)
 const startResize = (index: number, e: MouseEvent) => {
