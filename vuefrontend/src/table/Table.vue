@@ -1,19 +1,19 @@
 <template>
-  <div v-if="isLoading">
-    Loading...
+  <div v-if="isLoading && !data">
+    Loading... 
   </div>
-  <div v-else-if="isFetching">
+  <div v-else-if="isFetching && !data">
     Fetching...
   </div>
-  <div v-else-if="error">
+  <div v-else-if="error && !data">
     Error:
   </div>
   <div v-else-if="data && data.length > 0" class="flex flex-col h-full">
     <ScrollAreaRoot class="w-full h-full overflow-auto">
       <ScrollAreaViewport class="w-full h-full">
-        <table :style="{ tableLayout: 'fixed' }">
+        <table :style="{ tableLayout: 'fixed', width: `${totalWidth}px` }">
           <thead id="header" class="sticky top-0 bg-white z-10">
-            <tr>
+            <tr class="w-full">
               <th 
               v-for="(column, index) in Object.keys(data[0])"
               :key="`header-${column}`" 
@@ -22,24 +22,37 @@
               }"
               class="border-b border-green-200 text-left relative"
               >
-              <!--Resize handle-->
-              <div
-                  className="absolute 
-                  top-0 
-                  right-0 w-0.5 
-                  hover:w-1 
-                  cursor-col-resize 
-                  bg-cyan-300 
-                  hover:bg-cyan-400
-                  h-full
-                  "
-                  :style="{ height: `${totalHeight}px`}"
-                  @mousedown="(e) => startResize(index, e)"
-
-                /> 
-                <div class="p-2 truncate">
+              <!--Filter input component-->
+              <div class="p-1 pr-1.5 flex flex-col h-full w-full">
+                <input :list="`${column}-options`" 
+                :id="`${column}-input`" 
+                class="w-full h-full border-2  border-cyan-200 rounded-md" 
+                @input="(e: Event) => filterValues.set(column, (e.target as HTMLInputElement).value)"
+                />
+                <datalist :id="`${column}-options`">
+                  <option value="Apple"/>
+                  <option value="Banana"/>
+                  <option value="Cherry"/>
+                  <option :value="`${column}`"/>
+                </datalist>
+                <div class="flex-none bottom-0 left-0">
                   {{ column }}
                 </div>
+              </div>
+              <!--Resize handle-->
+              <div
+              className="absolute 
+              top-0 
+              right-0 w-0.5 
+              hover:w-1 
+              cursor-col-resize 
+              bg-cyan-300 
+              hover:bg-cyan-400
+              h-full
+              "
+              :style="{ height: `${totalHeight}px`}"
+              @mousedown="(e) => startResize(index, e)"
+              /> 
               </th>
             </tr>
           </thead>
@@ -58,11 +71,11 @@
             >
               <td 
                 v-for="(column, index) in Object.keys(data[0])"
-                class="overflow-hidden truncate whitespace-nowrap cursor-pointer border-b border-cyan-400"
+                class="truncate cursor-pointer border-b border-cyan-400"
                 :style="{ 
                   padding: '0 4px',
                   boxSizing: 'border-box',
-                  fontSize: '14px',
+                  fontSize: '12px',
                   width: `${columnWidths[index]}px`,
                   maxWidth: `${columnWidths[index]}px`,
                   minWidth: `${columnWidths[index]}px`,
@@ -128,7 +141,7 @@ const buttonClasses : string = `
 
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport, ScrollAreaCorner } from 'radix-vue'
 import { useQuery } from '@tanstack/vue-query'
-import { computed } from 'vue'
+import { computed, reactive, watch } from 'vue'
 
 const { shownTable, shownSchema, hash } = defineProps<{
   shownTable: string
@@ -136,10 +149,17 @@ const { shownTable, shownSchema, hash } = defineProps<{
   hash: string
 }>()
 
+const filterValues = reactive<Map<string, string>>(new Map())
 const params = computed(() => {
   const params_base = `hash=${hash}&schema=${shownSchema}&table=${shownTable}`
   const params_indexes = `&--indexes=1-50`
-  return params_base + params_indexes
+  var params_filters = ""
+  filterValues.forEach((value, key) => {
+    if (value !== "") {
+      params_filters += `&filter[${key}]=${value}`
+    }
+  })
+  return params_base + params_indexes + params_filters
 })
 
 const { data, isLoading, error, isFetching } = useQuery({
@@ -153,7 +173,6 @@ const { data, isLoading, error, isFetching } = useQuery({
   },
 })
 
-import { reactive, watch } from 'vue'
 
 const columns = computed(() => {
   if (!data.value || data.value.length === 0) return []
@@ -161,11 +180,12 @@ const columns = computed(() => {
 })
 const rowCount = computed(() => data.value?.length || 0);
 const rowHeight = 20;
-const headerHeight = 60;
+const headerHeight = 65;
 const totalHeight = computed(() => rowCount.value * (rowHeight + 1) + headerHeight)
 
 const columnWidths = reactive<number[]>([150])
 const totalWidth = reactive({ value: 150 })
+
 
 
 
@@ -187,6 +207,10 @@ watch(data, (newColumns) => {
     columnWidths.push(...Array(columnCount - columnWidths.length).fill(150))
   }
   totalWidth.value = columnWidths.reduce((acc, width) => acc + width, 0)
+  filterValues.clear()
+  columns.forEach((column: string) => {
+    filterValues.set(column, "")
+  })
 })
 //console.log("data", data.value)
 const startResize = (index: number, e: MouseEvent) => {
@@ -195,7 +219,7 @@ const startResize = (index: number, e: MouseEvent) => {
 
   const handleMouseMove = (e: MouseEvent) => {
     const deltaX = e.clientX - startX
-    const newWidth = Math.max(100, startWidth + deltaX)
+    const newWidth = Math.max(20, startWidth + deltaX)
 
     // Update the reactive array
     columnWidths[index] = newWidth
@@ -209,6 +233,7 @@ const startResize = (index: number, e: MouseEvent) => {
 
   document.addEventListener("mousemove", handleMouseMove)
   document.addEventListener("mouseup", handleMouseUp)
+  console.log("filterValues", filterValues)
 }
 
 </script>
