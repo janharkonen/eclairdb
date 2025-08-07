@@ -98,26 +98,10 @@
         </span>
       </div>
       <div className="flex items-center gap-3 text-cyan-800 ">
-        <button 
-          :class="buttonClasses"
-        >
-          First
-        </button>
-        <button 
-          :class="buttonClasses"
-        >
-          Previous
-        </button>
-        <button
-          :class="buttonClasses"
-        >
-          Next
-        </button>
-        <button
-          :class="buttonClasses"
-        >
-          Last
-        </button>
+        <button :class="buttonClasses">First</button>
+        <button :class="buttonClasses">Previous</button>
+        <button :class="buttonClasses">Next</button>
+        <button :class="buttonClasses">Last</button>
       </div>
     </div>
   </div>
@@ -197,22 +181,15 @@ watch(data, (newColumns) => {
   if (!data.value || data.value.length === 0) return
   const columns = Object.keys(newColumns[0])
   const columnCount = columns.length
-  console.log("old columnWidths", columnWidths)
-  console.log("columnCount", columnCount)
   if (columnWidths.length > columnCount) {
     columnWidths.splice(0, columnWidths.length, ...columnWidths.slice(0, columnCount))
   } else {
     columnWidths.push(...Array(columnCount - columnWidths.length).fill(150))
-    console.log("columnWidths", columnWidths)
   }
-  console.log("columnCount", columnCount)
   totalWidth.value = columnWidths.reduce((acc, width) => acc + width, 0)
-  console.log("new columnWidths", columnWidths)
 })
 //console.log("data", data.value)
 const startResize = (index: number, e: MouseEvent) => {
-  e.preventDefault()
-
   const startX = e.clientX
   const startWidth = columnWidths[index]
 
@@ -228,14 +205,10 @@ const startResize = (index: number, e: MouseEvent) => {
   const handleMouseUp = () => {
     document.removeEventListener("mousemove", handleMouseMove)
     document.removeEventListener("mouseup", handleMouseUp)
-    document.body.style.cursor = ""
-    document.body.style.userSelect = ""
   }
 
   document.addEventListener("mousemove", handleMouseMove)
   document.addEventListener("mouseup", handleMouseUp)
-  document.body.style.cursor = "col-resize"
-  document.body.style.userSelect = "none"
 }
 
 </script>
