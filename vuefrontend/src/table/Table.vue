@@ -28,7 +28,7 @@
                 :id="`${column}-input`" 
                 class="w-full h-full border-2  border-cyan-200 rounded-md bg-white" 
                 :value="filterValues.get(column) || ''"
-                @input="(e: Event) => filterValues.set(column, (e.target as HTMLInputElement).value)"
+                @input="(e: Event) => setFilter(e, column)"
                 />
                 <datalist :id="`${column}-options`">
                   <option value="Apple"/>
@@ -104,18 +104,26 @@
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-gray-700">
           Showing 
-          <span className="font-semibold">{{1}}</span> 
+          <span className="font-semibold">{{data.pageInfo.indexStart}}</span> 
           to 
-          <span className="font-semibold">{{50}}</span> 
+          <span className="font-semibold">{{data.pageInfo.indexEnd}}</span> 
           of 
-          <span className="font-semibold">{{42069}}</span> results
+          <span className="font-semibold">{{data.pageInfo.numOfRows}}</span> results
         </span>
       </div>
       <div className="flex items-center gap-3 text-cyan-800 ">
-        <button :class="buttonClasses">First</button>
-        <button :class="buttonClasses">Previous</button>
-        <button :class="buttonClasses">Next</button>
-        <button :class="buttonClasses">Last</button>
+        <button :class="buttonClasses" 
+        :disabled="pageNumber === 1"
+        @click="pageNumber = 1">First</button>
+        <button :class="buttonClasses" 
+        :disabled="pageNumber === 1"
+        @click="pageNumber--">Previous</button>
+        <button :class="buttonClasses" 
+        :disabled="pageNumber === Math.ceil(data.pageInfo.numOfRows / defaultPageSize)"
+        @click="pageNumber++">Next</button>
+        <button :class="buttonClasses" 
+        :disabled="pageNumber === Math.ceil(data.pageInfo.numOfRows / defaultPageSize)"
+        @click="pageNumber = Math.ceil(data.pageInfo.numOfRows / defaultPageSize)">Last</button>
       </div>
     </div>
   </div>
@@ -142,7 +150,7 @@ const buttonClasses : string = `
 
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport, ScrollAreaCorner } from 'radix-vue'
 import { useQuery } from '@tanstack/vue-query'
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, watch, ref } from 'vue'
 
 const { shownTable, shownSchema, hash } = defineProps<{
   shownTable: string
@@ -151,9 +159,11 @@ const { shownTable, shownSchema, hash } = defineProps<{
 }>()
 
 const filterValues = reactive<Map<string, string>>(new Map())
+const pageNumber = ref(1)
+const defaultPageSize = 50
 const params = computed(() => {
   const params_base = `--hash=${hash}&--schema=${shownSchema}&--table=${shownTable}`
-  const params_indexes = `&--indexes=1-50`
+  const params_indexes = `&--indexes=${(pageNumber.value - 1) * defaultPageSize + 1}-${pageNumber.value * defaultPageSize}`
   var params_filters = ""
   filterValues.forEach((value, key) => {
     if (value !== "") {
@@ -201,6 +211,7 @@ watch([() => shownTable, () => shownSchema], ([newTable, newSchema]) => {
   data.value?.columnList.forEach((column: string) => {
     filterValues.set(column, "")
   })
+  pageNumber.value = 1
 })
 //console.log("data", data.value)
 const startResize = (index: number, e: MouseEvent) => {
@@ -224,6 +235,11 @@ const startResize = (index: number, e: MouseEvent) => {
   document.addEventListener("mousemove", handleMouseMove)
   document.addEventListener("mouseup", handleMouseUp)
   console.log("filterValues", filterValues)
+}
+
+const setFilter = (e: Event, column: string) => {
+  filterValues.set(column, (e.target as HTMLInputElement).value)
+  pageNumber.value = 1
 }
 
 </script>

@@ -239,9 +239,15 @@ func filterRows(
 	//	}
 	//}
 
+	pageInfo := make(map[string]int)
+	pageInfo["indexStart"] = indexStart
+	pageInfo["indexEnd"] = indexStart + len(filteredRows) - 1
+	pageInfo["numOfRows"] = rowCount
+
 	fmt.Println(filterParams)
 	var rowListWithColumns map[string]any = make(map[string]any, 0)
 	rowListWithColumns["columnList"] = columnList
 	rowListWithColumns["rowList"] = filteredRows
+	rowListWithColumns["pageInfo"] = pageInfo
 	return rowListWithColumns
 }
