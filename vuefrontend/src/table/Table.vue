@@ -8,25 +8,25 @@
   <div v-else-if="error && !data">
     Error:
   </div>
-  <div v-else-if="data && data.length > 0" class="flex flex-col h-full">
+  <div v-else-if="data" class="flex flex-col h-full">
     <ScrollAreaRoot class="w-full h-full overflow-auto">
       <ScrollAreaViewport class="w-full h-full">
         <table :style="{ tableLayout: 'fixed', width: `${totalWidth}px` }">
-          <thead id="header" class="sticky top-0 bg-white z-10">
+          <thead id="header" class="sticky top-0 bg-gray-200 z-10">
             <tr class="w-full">
               <th 
-              v-for="(column, index) in Object.keys(data[0])"
+              v-for="(column, index) in data.columnList"
               :key="`header-${column}`" 
               :style="{ 
                 height: `${headerHeight}px`, 
               }"
-              class="border-b border-green-200 text-left relative"
+              class="border-b border-gray-300 text-left relative"
               >
               <!--Filter input component-->
               <div class="p-1 pr-1.5 flex flex-col h-full w-full">
                 <input :list="`${column}-options`" 
                 :id="`${column}-input`" 
-                class="w-full h-full border-2  border-cyan-200 rounded-md" 
+                class="w-full h-full border-2  border-cyan-200 rounded-md bg-white" 
                 :value="filterValues.get(column) || ''"
                 @input="(e: Event) => filterValues.set(column, (e.target as HTMLInputElement).value)"
                 />
@@ -59,7 +59,7 @@
           </thead>
           <tbody>
             <tr 
-            v-for="row in data"
+            v-for="row in data.rowList"
             :style="{ 
               height: `${rowHeight}px`,
               maxHeight: `${rowHeight}px`,
@@ -71,7 +71,7 @@
             class="bg-cyan-200 hover:bg-cyan-300"
             >
               <td 
-                v-for="(column, index) in Object.keys(data[0])"
+                v-for="(column, index) in data.columnList"
                 class="truncate cursor-pointer border-b border-cyan-400"
                 :style="{ 
                   padding: '0 4px',
@@ -152,12 +152,12 @@ const { shownTable, shownSchema, hash } = defineProps<{
 
 const filterValues = reactive<Map<string, string>>(new Map())
 const params = computed(() => {
-  const params_base = `hash=${hash}&schema=${shownSchema}&table=${shownTable}`
+  const params_base = `--hash=${hash}&--schema=${shownSchema}&--table=${shownTable}`
   const params_indexes = `&--indexes=1-50`
   var params_filters = ""
   filterValues.forEach((value, key) => {
     if (value !== "") {
-      params_filters += `&filter[${key}]=${value}`
+      params_filters += `&${key}=${value}`
     }
   })
   return params_base + params_indexes + params_filters
@@ -175,12 +175,7 @@ const { data, isLoading, error, isFetching } = useQuery({
   placeholderData: (previousData) => previousData,
 })
 
-
-const columns = computed(() => {
-  if (!data.value || data.value.length === 0) return []
-  return Object.keys(data.value[0])
-})
-const rowCount = computed(() => data.value?.length || 0);
+const rowCount = computed(() => data.value?.rowList?.length || 0);
 const rowHeight = 20;
 const headerHeight = 65;
 const totalHeight = computed(() => rowCount.value * (rowHeight + 1) + headerHeight)
@@ -189,19 +184,9 @@ const columnWidths = reactive<number[]>([150])
 const totalWidth = reactive({ value: 150 })
 
 
-
-
-
 watch(data, (newData) => {
-  console.log("columnWidths: ", columnWidths)
-  console.log("totalWidth", totalWidth.value)
-  console.log("columns", columns.value)
-  console.log("newData", newData)
-})
-
-watch(data, (newData) => {
-  if (!data.value || data.value.length === 0) return
-  const columns = Object.keys(newData[0])
+  if (!newData || newData.rowList.length === 0) return
+  const columns = newData.columnList
   const columnCount = columns.length
   if (columnWidths.length > columnCount) {
     columnWidths.splice(0, columnWidths.length, ...columnWidths.slice(0, columnCount))
@@ -212,7 +197,7 @@ watch(data, (newData) => {
   
   // Only initialize filter values if they don't exist for the current columns
   const currentFilterKeys = Array.from(filterValues.keys())
-  const newColumns = Object.keys(newData[0])
+  const newColumns = newData.columnList
   
   // Only clear and reinitialize if the columns have actually changed
   if (currentFilterKeys.length !== newColumns.length || 
