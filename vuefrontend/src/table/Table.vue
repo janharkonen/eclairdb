@@ -198,15 +198,13 @@ watch(data, (newData) => {
   // Only initialize filter values if they don't exist for the current columns
   const currentFilterKeys = Array.from(filterValues.keys())
   const newColumns = newData.columnList
-  
-  // Only clear and reinitialize if the columns have actually changed
-  if (currentFilterKeys.length !== newColumns.length || 
-      !newColumns.every((col: string) => currentFilterKeys.includes(col))) {
-    filterValues.clear()
-    newColumns.forEach((column: string) => {
-      filterValues.set(column, "")
-    })
-  }
+})
+
+watch([() => shownTable, () => shownSchema], ([newTable, newSchema]) => {
+  filterValues.clear()
+  data.value?.columnList.forEach((column: string) => {
+    filterValues.set(column, "")
+  })
 })
 //console.log("data", data.value)
 const startResize = (index: number, e: MouseEvent) => {
