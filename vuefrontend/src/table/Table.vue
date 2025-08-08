@@ -189,7 +189,7 @@ const params = computed(() => {
 })
 
 const { data, isLoading, error, isFetching } = useQuery({
-  queryKey: ['table', params],
+  queryKey: ['table', () => params.value],
   queryFn: async () => {
     const response = await fetch(`/api/filtered_paginated_rows?${params.value}`)
     if (!response.ok) {
@@ -246,10 +246,18 @@ const startResize = (index: number, e: MouseEvent) => {
   const handleMouseUp = () => {
     document.removeEventListener("mousemove", handleMouseMove)
     document.removeEventListener("mouseup", handleMouseUp)
+    const table = document.getElementsByTagName("table")?.[0]
+    if (table) {
+      table.style.userSelect = "text"
+    }
   }
 
   document.addEventListener("mousemove", handleMouseMove)
   document.addEventListener("mouseup", handleMouseUp)
+  const table = document.getElementsByTagName("table")?.[0]
+  if (table) {
+    table.style.userSelect = "none"
+  }
   console.log("filterValues", filterValues)
 }
 
