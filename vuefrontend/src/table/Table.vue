@@ -194,10 +194,6 @@ watch(data, (newData) => {
     columnWidths.push(...Array(columnCount - columnWidths.length).fill(150))
   }
   totalWidth.value = columnWidths.reduce((acc, width) => acc + width, 0)
-  
-  // Only initialize filter values if they don't exist for the current columns
-  const currentFilterKeys = Array.from(filterValues.keys())
-  const newColumns = newData.columnList
 })
 
 watch([() => shownTable, () => shownSchema], ([newTable, newSchema]) => {
