@@ -202,7 +202,7 @@ func filterRows(
 	indexStart int,
 	indexEnd int,
 ) map[string]any {
-	//lastIndex := min(indexEnd, len(tableRows))
+	// Init columnList
 	columnList := make([]string, len(tableRows[0]))
 	i := 0
 	for key := range tableRows[0] {
@@ -211,6 +211,14 @@ func filterRows(
 	}
 	sort.Strings(columnList)
 
+	// Init columnOptionSet
+	const MAX_FILTER_OPTIONS = 32
+	columnOptionsSet := make(map[string]map[string]struct{})
+	for _, column := range columnList {
+		columnOptionsSet[column] = make(map[string]struct{})
+	}
+
+	// Filter rows
 	filteredRows := make([]types.Row, 0)
 	rowCount := 0
 	for _, row := range tableRows {
@@ -228,6 +236,13 @@ func filterRows(
 		}
 		if match {
 			rowCount++
+			for _, column := range columnList {
+				if _, ok := columnOptionsSet[column][string(row[types.ColumnName(column)])]; !ok {
+					if len(columnOptionsSet[column]) < MAX_FILTER_OPTIONS {
+						columnOptionsSet[column][string(row[types.ColumnName(column)])] = struct{}{}
+					}
+				}
+			}
 			if rowCount >= indexStart && rowCount <= indexEnd {
 				filteredRows = append(filteredRows, row)
 			}
@@ -248,6 +263,7 @@ func filterRows(
 	var rowListWithColumns map[string]any = make(map[string]any, 0)
 	rowListWithColumns["columnList"] = columnList
 	rowListWithColumns["rowList"] = filteredRows
+	rowListWithColumns["columnOptions"] = columnOptionsSet
 	rowListWithColumns["pageInfo"] = pageInfo
 	return rowListWithColumns
 }

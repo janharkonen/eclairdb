@@ -29,12 +29,10 @@
                 class="w-full h-full border-2  border-cyan-200 rounded-md bg-white" 
                 :value="filterValues.get(column) || ''"
                 @input="(e: Event) => setFilter(e, column)"
+                autocomplete="off"
                 />
                 <datalist :id="`${column}-options`">
-                  <option value="Apple"/>
-                  <option value="Banana"/>
-                  <option value="Cherry"/>
-                  <option :value="`${column}`"/>
+                  <option v-for="option in Object.keys(data.columnOptions[column])" :value="option"/>
                 </datalist>
                 <div class="flex-none bottom-0 left-0">
                   {{ column }}
