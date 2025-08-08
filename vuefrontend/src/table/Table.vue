@@ -8,8 +8,8 @@
   <div v-else-if="error && !data">
     Error:
   </div>
-  <div v-else-if="data" class="flex flex-col h-full">
-    <ScrollAreaRoot class="w-full h-full overflow-auto">
+  <div v-else-if="data" class="flex flex-col h-full p-4">
+    <ScrollAreaRoot class="w-full h-full overflow-auto rounded-t-xl border-x-4 border-t-4 border-cyan-400 bg-gray-100">
       <ScrollAreaViewport class="w-full h-full">
         <table :style="{ tableLayout: 'fixed', width: `${totalWidth}px` }">
           <thead id="header" class="sticky top-0 bg-gray-200 z-10">
@@ -98,7 +98,7 @@
       <ScrollAreaCorner class="z-50 bg-gray-200 touch-none select-none" />
     </ScrollAreaRoot>
     <!--Pagination section-->
-    <div className="flex-none h-12 w-full bg-cyan-400 border-t-2 border-cyan-500 flex items-center justify-between px-6 shadow-sm">
+    <div className="flex-none h-12 w-full rounded-b-xl bg-cyan-400 border-b-4 border-x-4 border-cyan-500 flex items-center justify-between px-6 shadow-sm">
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-gray-700">
           Showing 
