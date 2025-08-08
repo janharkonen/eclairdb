@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -26,7 +27,7 @@ func main() {
 	router.GET("/get-schemas-and-tables", getSchemasAndTables)
 	router.GET("/get-schemas-and-tables-stream", getSchemasAndTablesStream)
 	// TODO: change name of method
-	router.GET("/filtered_paginated_products", getFilteredPaginatedProducts)
+	router.GET("/filtered_paginated_rows", getFilteredPaginatedRows)
 	router.Run("0.0.0.0:8081")
 }
 
@@ -132,13 +133,17 @@ func getSchemasAndTablesStream(ginctx *gin.Context) {
 	ginctx.Writer.Flush()
 }
 
-func getFilteredPaginatedProducts(ginctx *gin.Context) {
+func getFilteredPaginatedRows(ginctx *gin.Context) {
 	var queryParams map[string][]string = ginctx.Request.URL.Query()
+	hash := queryParams["--hash"][0]
+	schema := queryParams["--schema"][0]
+	table := queryParams["--table"][0]
 
 	var filterParams map[string]string = parseFilterParams(queryParams)
-	hash := filterParams["hash"]
-	schema := filterParams["schema"]
-	table := filterParams["table"]
+
+	for key, value := range filterParams {
+		fmt.Println(key, value)
+	}
 
 	var indexStart int
 	var indexEnd int
@@ -161,7 +166,7 @@ func getFilteredPaginatedProducts(ginctx *gin.Context) {
 		return
 	}
 
-	var filteredRows = getFilteredPaginatedRows(tableData.Rows, filterParams, indexStart, indexEnd)
+	var filteredRows = filterRows(tableData.Rows, filterParams, indexStart, indexEnd)
 
 	ginctx.JSON(http.StatusOK, filteredRows)
 }
@@ -191,11 +196,42 @@ func parseIndexes(queryParams map[string][]string) (int, int, error) {
 	return indexStart, indexEnd, err
 }
 
-func getFilteredPaginatedRows(tableData []types.Row, filterParams map[string]string, indexStart int, indexEnd int) []types.Row {
+func filterRows(
+	tableRows []types.Row,
+	filterParams map[string]string,
+	indexStart int,
+	indexEnd int,
+) map[string]any {
+	//lastIndex := min(indexEnd, len(tableRows))
+	columnList := make([]string, len(tableRows[0]))
+	i := 0
+	for key := range tableRows[0] {
+		columnList[i] = string(key)
+		i++
+	}
+	sort.Strings(columnList)
+
 	filteredRows := make([]types.Row, 0)
-	lastIndex := min(indexEnd, len(tableData))
-	for i := indexStart; i <= lastIndex; i++ {
-		filteredRows = append(filteredRows, tableData[i-1])
+	rowCount := 0
+	for _, row := range tableRows {
+		match := true
+		for key, value := range filterParams {
+			if rowValue, ok := row[types.ColumnName(key)]; ok {
+				if !strings.Contains(strings.ToLower(string(rowValue)), strings.ToLower(value)) {
+					match = false
+					break
+				}
+			} else {
+				match = false
+				break
+			}
+		}
+		if match {
+			rowCount++
+			if rowCount >= indexStart && rowCount <= indexEnd {
+				filteredRows = append(filteredRows, row)
+			}
+		}
 	}
 	//for _, row := range tableData {
 	//	if row[types.ColumnName(filterParams["id"])] == types.Value(filterParams["id"]) {
@@ -204,6 +240,8 @@ func getFilteredPaginatedRows(tableData []types.Row, filterParams map[string]str
 	//}
 
 	fmt.Println(filterParams)
-
-	return filteredRows
+	var rowListWithColumns map[string]any = make(map[string]any, 0)
+	rowListWithColumns["columnList"] = columnList
+	rowListWithColumns["rowList"] = filteredRows
+	return rowListWithColumns
 }
