@@ -15,6 +15,7 @@ import (
 
 var db types.Databases
 
+// main initializes the in-memory database map, sets up the Gin HTTP server with CORS middleware, defines API routes for database operations, and starts the server on port 8081.
 func main() {
 	fmt.Println("Starting Go API")
 	db = make(types.Databases)
@@ -89,6 +90,9 @@ func getSchemasAndTables(ginctx *gin.Context) {
 
 }
 
+// getSchemasAndTablesStream streams real-time updates to the client about the readiness of tables in a specified database using Server-Sent Events (SSE).
+// 
+// For the database identified by the provided `hash` query parameter, this handler sends a "table_ready" event each time a table is marked as loaded, and a final "complete" event when all tables are ready. If the client disconnects before completion, the stream is terminated. Responds with HTTP 400 if the `hash` parameter is missing.
 func getSchemasAndTablesStream(ginctx *gin.Context) {
 
 	ginctx.Header("Content-Type", "text/event-stream")
@@ -133,6 +137,9 @@ func getSchemasAndTablesStream(ginctx *gin.Context) {
 	ginctx.Writer.Flush()
 }
 
+// getFilteredPaginatedRows handles HTTP requests to retrieve filtered and paginated rows from a specified table in the in-memory database.
+// It extracts the database hash, schema, and table from query parameters, applies filter criteria and pagination, and returns the matching rows and column list as JSON.
+// Responds with HTTP 400 if index parameters are invalid.
 func getFilteredPaginatedRows(ginctx *gin.Context) {
 	var queryParams map[string][]string = ginctx.Request.URL.Query()
 	hash := queryParams["--hash"][0]
@@ -183,7 +190,8 @@ func parseFilterParams(queryParams map[string][]string) map[string]string {
 	return filterParams
 }
 
-// Helper function
+// parseIndexes parses the "--indexes" query parameter in "start-end" format and returns the start and end indexes as integers.
+// Returns an error if parsing fails or the parameter is missing.
 func parseIndexes(queryParams map[string][]string) (int, int, error) {
 	var indexStart int
 	var indexEnd int
@@ -196,6 +204,9 @@ func parseIndexes(queryParams map[string][]string) (int, int, error) {
 	return indexStart, indexEnd, err
 }
 
+// filterRows returns a map containing a sorted list of column names and a paginated list of rows that match all provided filter criteria.
+// Each filter is applied as a case-insensitive substring match on the corresponding column value.
+// The returned map has keys "columnList" (sorted column names) and "rowList" (filtered, paginated rows).
 func filterRows(
 	tableRows []types.Row,
 	filterParams map[string]string,
