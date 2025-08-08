@@ -135,9 +135,31 @@ func getSchemasAndTablesStream(ginctx *gin.Context) {
 
 func getFilteredPaginatedRows(ginctx *gin.Context) {
 	var queryParams map[string][]string = ginctx.Request.URL.Query()
-	hash := queryParams["--hash"][0]
-	schema := queryParams["--schema"][0]
-	table := queryParams["--table"][0]
+
+	hashValues, hashExists := queryParams["--hash"]
+	schemaValues, schemaExists := queryParams["--schema"]
+	tableValues, tableExists := queryParams["--table"]
+
+	if !hashExists || len(hashValues) == 0 ||
+		!schemaExists || len(schemaValues) == 0 ||
+		!tableExists || len(tableValues) == 0 {
+		ginctx.JSON(http.StatusBadRequest, gin.H{"error": "Missing required parameters: --hash, --schema, --table"})
+		return
+	}
+
+	hash := hashValues[0]
+	schema := schemaValues[0]
+	table := tableValues[0]
+
+	sortColumnValues, sortColumnExists := queryParams["--sort"]
+	sortDirectionValues, sortDirectionExists := queryParams["--sort_direction"]
+
+	var sortColumn string = ""
+	var sortDirection string = ""
+	if sortColumnExists && len(sortColumnValues) > 0 && sortDirectionExists && len(sortDirectionValues) > 0 {
+		sortColumn = sortColumnValues[0]
+		sortDirection = sortDirectionValues[0]
+	}
 
 	var filterParams map[string]string = parseFilterParams(queryParams)
 
@@ -166,7 +188,7 @@ func getFilteredPaginatedRows(ginctx *gin.Context) {
 		return
 	}
 
-	var filteredRows = filterRows(tableData.Rows, filterParams, indexStart, indexEnd)
+	var filteredRows = filterRows(tableData.Rows, filterParams, indexStart, indexEnd, sortColumn, sortDirection)
 
 	ginctx.JSON(http.StatusOK, filteredRows)
 }
@@ -201,6 +223,8 @@ func filterRows(
 	filterParams map[string]string,
 	indexStart int,
 	indexEnd int,
+	sortColumn string,
+	sortDirection string,
 ) map[string]any {
 	// Init columnList
 	columnList := make([]string, len(tableRows[0]))
@@ -219,7 +243,7 @@ func filterRows(
 	}
 
 	// Filter rows
-	filteredRows := make([]types.Row, 0)
+	filteredRowsPointers := make([]*types.Row, 0)
 	rowCount := 0
 	for _, row := range tableRows {
 		match := true
@@ -243,16 +267,28 @@ func filterRows(
 					}
 				}
 			}
-			if rowCount >= indexStart && rowCount <= indexEnd {
-				filteredRows = append(filteredRows, row)
-			}
+			filteredRowsPointers = append(filteredRowsPointers, &row)
 		}
 	}
-	//for _, row := range tableData {
-	//	if row[types.ColumnName(filterParams["id"])] == types.Value(filterParams["id"]) {
-	//		filteredRows = append(filteredRows, row)
-	//	}
-	//}
+
+	// Sort rows if necessary
+	if sortColumn != "" {
+		if sortDirection == "asc" {
+			sort.Slice(filteredRowsPointers, func(i, j int) bool {
+				return (*filteredRowsPointers[i])[types.ColumnName(sortColumn)] < (*filteredRowsPointers[j])[types.ColumnName(sortColumn)]
+			})
+		} else if sortDirection == "desc" {
+			sort.Slice(filteredRowsPointers, func(i, j int) bool {
+				return (*filteredRowsPointers[i])[types.ColumnName(sortColumn)] > (*filteredRowsPointers[j])[types.ColumnName(sortColumn)]
+			})
+		}
+	}
+
+	// Arrange rows to return
+	filteredRows := make([]types.Row, 0)
+	for i := indexStart; i <= min(indexEnd, len(filteredRowsPointers)); i++ {
+		filteredRows = append(filteredRows, *filteredRowsPointers[i-1])
+	}
 
 	pageInfo := make(map[string]int)
 	pageInfo["indexStart"] = indexStart

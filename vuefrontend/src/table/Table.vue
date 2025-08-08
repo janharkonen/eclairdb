@@ -15,7 +15,7 @@
           <thead id="header" class="sticky top-0 bg-gray-200 z-10">
             <tr class="w-full">
               <th 
-              v-for="(column, index) in data.columnList"
+              v-for="(column, index) in columns"
               :key="`header-${column}`" 
               :style="{ 
                 height: `${headerHeight}px`, 
@@ -23,10 +23,19 @@
               class="border-b border-gray-300 text-left relative"
               >
               <!--Filter input component-->
-              <div class="p-1 pr-1.5 flex flex-col h-full w-full">
-                <div class="flex-none top-0 left-0 text-sm font-sans font-bold"
-                :style="{fontSize: '16px', fontWeight: 'bold', fontFamily: 'sans-serif'} ">
-                  {{ column }}
+              <div class="p-1 pr-1.5 flex flex-col h-full w-full gap-1">
+                <div class="flex-none top-0 left-0 text-sm font-sans font-bold flex flex-row justify-between"
+                :style="{fontSize: '16px', fontWeight: 'bold', fontFamily: 'sans-serif'}"
+                @mouseenter="showFilterOptions(column)"
+                @mouseleave="hideFilterOptions(column)"
+                >
+                  <div>
+                    {{ column }}
+                  </div>
+                  <div class="flex flex-row gap-2 items-start" :id="`${column}-buttons`">
+                    <div class="cursor-pointer bg-gray-300 hover:bg-green-300 rounded-sm" @click="toggleSort(column)"><ArrowUpDown class="w-4 h-4" /></div>
+                    <div class="cursor-pointer bg-gray-300 hover:bg-red-300 rounded-sm" @click="removeColumn(column)"><X class="w-4 h-4 p-0.5" /></div>
+                  </div>
                 </div>
                 <input :list="`${column}-options`" 
                 :id="`${column}-input`" 
@@ -70,7 +79,7 @@
             class="bg-white hover:bg-cyan-200"
             >
               <td 
-                v-for="(column, index) in data.columnList"
+                v-for="(column, index) in columns"
                 class="truncate cursor-pointer border-b border-cyan-400 font-sans"
                 :style="{ 
                   padding: '0 4px',
@@ -150,6 +159,7 @@ const buttonClasses : string = `
 import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewport, ScrollAreaCorner } from 'radix-vue'
 import { useQuery } from '@tanstack/vue-query'
 import { computed, reactive, watch, ref } from 'vue'
+import { ArrowUpDown, X } from 'lucide-vue-next'
 
 const { shownTable, shownSchema, hash } = defineProps<{
   shownTable: string
@@ -160,6 +170,8 @@ const { shownTable, shownSchema, hash } = defineProps<{
 const filterValues = reactive<Map<string, string>>(new Map())
 const pageNumber = ref(1)
 const defaultPageSize = 50
+const sortColumn = ref<string>("")
+const sortDirection = ref<string>("")
 const params = computed(() => {
   const params_base = `--hash=${hash}&--schema=${shownSchema}&--table=${shownTable}`
   const params_indexes = `&--indexes=${(pageNumber.value - 1) * defaultPageSize + 1}-${pageNumber.value * defaultPageSize}`
@@ -169,7 +181,11 @@ const params = computed(() => {
       params_filters += `&${key}=${value}`
     }
   })
-  return params_base + params_indexes + params_filters
+  var params_sort = ""
+  if (sortColumn.value !== "") {
+    params_sort = `&--sort=${sortColumn.value}&--sort_direction=${sortDirection.value}`
+  }
+  return params_base + params_indexes + params_filters + params_sort
 })
 
 const { data, isLoading, error, isFetching } = useQuery({
@@ -188,6 +204,7 @@ const rowCount = computed(() => data.value?.rowList?.length || 0);
 const rowHeight = 20;
 const headerHeight = 65;
 const totalHeight = computed(() => rowCount.value * (rowHeight + 1) + headerHeight)
+const columns = reactive<string[]>([])
 
 const columnWidths = reactive<number[]>([150])
 const totalWidth = reactive({ value: 150 })
@@ -195,7 +212,7 @@ const totalWidth = reactive({ value: 150 })
 
 watch(data, (newData) => {
   if (!newData || newData.rowList.length === 0) return
-  const columns = newData.columnList
+  columns.splice(0, columns.length, ...newData.columnList)
   const columnCount = columns.length
   if (columnWidths.length > columnCount) {
     columnWidths.splice(0, columnWidths.length, ...columnWidths.slice(0, columnCount))
@@ -241,4 +258,38 @@ const setFilter = (e: Event, column: string) => {
   pageNumber.value = 1
 }
 
+const showFilterOptions = (column: string) => {
+  const buttons = document.getElementById(`${column}-buttons`)
+  if (buttons) {
+    buttons.style.opacity = '100'
+  }
+}
+
+const hideFilterOptions = (column: string) => { 
+  const buttons = document.getElementById(`${column}-buttons`)
+  if (buttons) {
+    buttons.style.opacity = '0'
+  }
+}
+
+const removeColumn = (column: string) => {
+  columns.splice(columns.indexOf(column), 1)
+  columnWidths.splice(columns.indexOf(column), 1)
+  totalWidth.value = totalWidth.value - columnWidths[columns.indexOf(column)]
+}
+
+const toggleSort = (column: string) => {
+  if (sortColumn.value === column) {
+    if (sortDirection.value === "asc") {
+      sortDirection.value = "desc"
+    } else {
+      sortDirection.value = ""
+      sortColumn.value = ""
+    }
+  } else {
+    sortColumn.value = column
+    sortDirection.value = "asc"
+  }
+  pageNumber.value = 1
+}
 </script>
