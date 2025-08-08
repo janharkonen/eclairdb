@@ -24,9 +24,13 @@
               >
               <!--Filter input component-->
               <div class="p-1 pr-1.5 flex flex-col h-full w-full">
+                <div class="flex-none top-0 left-0 text-sm font-sans font-bold"
+                :style="{fontSize: '16px', fontWeight: 'bold', fontFamily: 'sans-serif'} ">
+                  {{ column }}
+                </div>
                 <input :list="`${column}-options`" 
                 :id="`${column}-input`" 
-                class="w-full h-full border-2  border-cyan-200 rounded-md bg-white" 
+                class="w-full h-full p-2 border-2  border-cyan-200 rounded-md bg-white" 
                 :value="filterValues.get(column) || ''"
                 @input="(e: Event) => setFilter(e, column)"
                 autocomplete="off"
@@ -34,9 +38,6 @@
                 <datalist :id="`${column}-options`">
                   <option v-for="option in Object.keys(data.columnOptions[column])" :value="option"/>
                 </datalist>
-                <div class="flex-none bottom-0 left-0">
-                  {{ column }}
-                </div>
               </div>
               <!--Resize handle-->
               <div
@@ -66,11 +67,11 @@
               textOverflow: 'ellipsis',
               lineHeight: `${rowHeight}px`
             }"
-            class="bg-cyan-200 hover:bg-cyan-300"
+            class="bg-white hover:bg-cyan-200"
             >
               <td 
                 v-for="(column, index) in data.columnList"
-                class="truncate cursor-pointer border-b border-cyan-400"
+                class="truncate cursor-pointer border-b border-cyan-400 font-sans"
                 :style="{ 
                   padding: '0 4px',
                   boxSizing: 'border-box',
@@ -98,7 +99,7 @@
       <ScrollAreaCorner class="z-50 bg-gray-200 touch-none select-none" />
     </ScrollAreaRoot>
     <!--Pagination section-->
-    <div className="flex-none h-12 w-full rounded-b-xl bg-cyan-400 border-b-4 border-x-4 border-cyan-500 flex items-center justify-between px-6 shadow-sm">
+    <div className="flex-none h-12 w-full rounded-b-xl bg-gray-200 border-b-4 border-x-4 border-cyan-400 flex items-center justify-between px-6 shadow-sm">
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-gray-700">
           Showing 
@@ -137,8 +138,8 @@ const buttonClasses : string = `
             border 
             border-cyan-200 
             rounded-md 
-            bg-cyan-100
-            hover:bg-cyan-200
+            bg-white
+            hover:bg-gray-100
             disabled:opacity-40 
             disabled:cursor-not-allowed 
             disabled:hover:bg-white 
