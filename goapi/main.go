@@ -27,7 +27,7 @@ func main() {
 	router.GET("/get-schemas-and-tables", getSchemasAndTables)
 	router.GET("/get-schemas-and-tables-stream", getSchemasAndTablesStream)
 	// TODO: change name of method
-	router.GET("/filtered_paginated_products", getFilteredPaginatedProducts)
+	router.GET("/filtered_paginated_rows", getFilteredPaginatedRows)
 	router.Run("0.0.0.0:8081")
 }
 
@@ -133,7 +133,7 @@ func getSchemasAndTablesStream(ginctx *gin.Context) {
 	ginctx.Writer.Flush()
 }
 
-func getFilteredPaginatedProducts(ginctx *gin.Context) {
+func getFilteredPaginatedRows(ginctx *gin.Context) {
 	var queryParams map[string][]string = ginctx.Request.URL.Query()
 	hash := queryParams["--hash"][0]
 	schema := queryParams["--schema"][0]
@@ -166,7 +166,7 @@ func getFilteredPaginatedProducts(ginctx *gin.Context) {
 		return
 	}
 
-	var filteredRows = getFilteredPaginatedRows(tableData.Rows, filterParams, indexStart, indexEnd)
+	var filteredRows = filterRows(tableData.Rows, filterParams, indexStart, indexEnd)
 
 	ginctx.JSON(http.StatusOK, filteredRows)
 }
@@ -196,7 +196,7 @@ func parseIndexes(queryParams map[string][]string) (int, int, error) {
 	return indexStart, indexEnd, err
 }
 
-func getFilteredPaginatedRows(
+func filterRows(
 	tableRows []types.Row,
 	filterParams map[string]string,
 	indexStart int,

@@ -166,7 +166,7 @@ const params = computed(() => {
 const { data, isLoading, error, isFetching } = useQuery({
   queryKey: ['table', params],
   queryFn: async () => {
-    const response = await fetch(`/api/filtered_paginated_products?${params.value}`)
+    const response = await fetch(`/api/filtered_paginated_rows?${params.value}`)
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`)
     }
