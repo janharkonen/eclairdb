@@ -15,7 +15,7 @@ v-bind: is the same as :
     >
     <div class="relative flex w-full h-12 md:h-16">
       <input 
-        type="text" 
+        type="password" 
         autocomplete="off"
         v-model="inputText"
         :name="service"

@@ -27,7 +27,7 @@
     </div>
     <div class="inputs-div">
       <DatabaseInput
-        img-src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg"
+        img-src="https://picapi.janharkonen.fi/api/pics/7b65169319da4ad5a22c900d4a91db00.png"
         service="PostgreSQL"
         placeholder="postgres://user_name:pass_word@host-IP:port/database-name?sslmode=require&channel_binding=require"
         apiroute="connect-postgres"

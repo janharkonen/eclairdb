@@ -202,7 +202,7 @@ const { data, isLoading, error, isFetching } = useQuery({
 
 const rowCount = computed(() => data.value?.rowList?.length || 0);
 const rowHeight = 20;
-const headerHeight = 65;
+const headerHeight = 75;
 const totalHeight = computed(() => rowCount.value * (rowHeight + 1) + headerHeight)
 const columns = reactive<string[]>([])
 
